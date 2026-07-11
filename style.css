@@ -1066,6 +1066,16 @@ textarea.drag-over {
     padding: 4px 0 0;
 }
 
+/* ========== 抽屉关闭动画 ========== */
+.modal-overlay.drawer.closing .modal-content {
+    transition: transform 0.3s cubic-bezier(0.55, 0, 1, 0.45);
+    transform: translateY(100%);
+}
+.modal-overlay.drawer.closing {
+    transition: background 0.3s;
+    background: rgba(0, 0, 0, 0);
+}
+
 @media (max-width: 740px) {
     .input-tabs {
         width: 100%;

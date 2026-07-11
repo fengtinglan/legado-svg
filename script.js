@@ -286,12 +286,18 @@
         setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000);
     }
 
+    // 平滑关闭动画
     function closeToSvgModal() {
-        $('toSvgModal').classList.remove('active');
-        $('drawerContent').classList.remove('dragging');
+    const modal = $('toSvgModal');
+    // 添加关闭动画类，触发滑出
+    modal.classList.add('closing');
+    // 动画结束后移除类和 active，并重置高度
+    setTimeout(() => {
+        modal.classList.remove('active', 'closing');
         $('drawerContent').style.height = getHalfHeight() + 'px';
         setUIMode(false, false);
-    }
+    }, 300); // 与 CSS transition 时长一致
+}
 
     function customLink() {
         const current = getSvgUrl();
@@ -881,10 +887,9 @@
         e.preventDefault();
         const delta = getClientY(e) - dragStartY;
         let newHeight = dragStartHeight - delta;
-        newHeight = Math.min(getFullHeight(), Math.max(60, newHeight));
+        // 完全不限制上限，仅保底最小高度20px
+        newHeight = Math.max(20, newHeight);
         $('drawerContent').style.height = newHeight + 'px';
-        if (newHeight / windowHeight >= FULL_TRIGGER_RATIO && !isFullscreen) setUIMode(true, false);
-        else if (newHeight / windowHeight < FULL_TRIGGER_RATIO && isFullscreen) setUIMode(false, false);
     }
 
     function onDragEnd() {
@@ -895,10 +900,20 @@
         $('drawerContent').style.transition = '';
         const finalHeight = parseFloat($('drawerContent').style.height) || getHalfHeight();
         const ratio = finalHeight / windowHeight;
-        if (ratio < CLOSE_RATIO) { closeToSvgModal(); return; }
-        if (ratio >= FULL_TRIGGER_RATIO) { $('drawerContent').style.height = getFullHeight() + 'px';
-            setUIMode(true, true); return; }
-        $('drawerContent').style.height = getHalfHeight() + 'px';
+
+        // 低于关闭阈值：关闭弹窗（带动画）
+        if (ratio < CLOSE_RATIO) {
+            closeToSvgModal();
+            return;
+        }
+        // 超过全屏阈值：自动全屏
+        if (ratio >= FULL_TRIGGER_RATIO) {
+            $('drawerContent').style.height = getFullHeight() + 'px';
+            setUIMode(true, true);
+            return;
+        }
+        // 中间位置：保持当前高度
+        $('drawerContent').style.height = finalHeight + 'px';
         setUIMode(false, true);
     }
 
