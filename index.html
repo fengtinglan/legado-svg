@@ -33,12 +33,31 @@
                 <hr class="help-divider">
                 <div class="help-section">
                     <h3>🎈 气泡预览与导出</h3>
-                    <p>点击 <strong>"🎈 气泡预览"</strong> 打开实时预览面板，你可以调整：</p>
+                    <p>点击 <strong>"🎈 气泡预览"</strong> 或格式转换按钮打开实时预览面板，你可以调整以下参数：</p>
                     <p>• 文字位置（X/Y坐标）和字号大小</p>
                     <p>• 字体颜色、字体名称、文本内容</p>
-                    <p>• 描边粗细以及画布背景颜色</p>
-                    <p>调整满意后点击 <strong>"📋 导出气泡格式"</strong> 即可复制完整的SVG代码。</p>
-                    <div class="help-tip">💡 推荐使用 <strong>"📐 转为阅读格式"</strong> 快速生成居中文字的气泡图，适合制作阅读量展示。</div>
+                    <p>• 描边粗细、描边透明度、填充颜色、填充透明度</p>
+                    <p>• 画布背景颜色</p>
+                    <p>调整满意后点击 <strong>"📋 导出气泡格式"</strong> 即可导出或复制最终的SVG代码。</p>
+                    <div class="help-tip">💡 推荐使用 <strong>"📐 转为晋江格式"</strong> 快速生成居中文字的阅读量气泡，<strong>"☀️ 转为晴天格式"</strong> 可自动将颜色替换为变量。</div>
+                </div>
+                <hr class="help-divider">
+                <div class="help-section">
+                    <h3>📝 气泡预览参数填写说明</h3>
+                    <p>• <strong>X / Y 坐标</strong>：数值，定义文字在画面中的位置。</p>
+                    <p>• <strong>字体大小</strong>：数值，字号越大文字越大。</p>
+                    <p>• <strong>字体颜色</strong>：支持 <span class="help-shortcut">#十六进制</span> 颜色值（如 <span class="help-shortcut">#ff0000</span>），也可填写变量名（如 <span class="help-shortcut">字</span> 或 <span class="help-shortcut">$fontcolor</span>）。预览时若填非颜色值会自动使用黑色。</p>
+                    <p>• <strong>字体族</strong>：字体名称，如 <span class="help-shortcut">Arial</span>、<span class="help-shortcut">Roboto Condensed</span>，可填写多个作为备用。</p>
+                    <p>• <strong>字体粗细</strong>：<br>
+                    <span style="padding-left:24px;">一、基础规则：支持纯数字，无单位，范围 <span class="help-shortcut">100</span> ~ <span class="help-shortcut">900</span>，只允许整百递增；禁止小数、非整百、加单位。<br>
+                    <span style="padding-left:24px;">二、数字与关键字对照：<span class="help-shortcut">100</span>=thin(极细)、<span class="help-shortcut">200</span>=extra-light、<span class="help-shortcut">300</span>=light(细体)、<span class="help-shortcut">400</span>=normal(默认常规)、<span class="help-shortcut">500</span>=medium(中等)、<span class="help-shortcut">600</span>=semi-bold(半粗)、<span class="help-shortcut">700</span>=bold(粗体)、<span class="help-shortcut">800</span>=extra-bold(超粗)、<span class="help-shortcut">900</span>=black(黑体)。<br>
+                    <span style="padding-left:24px;">三、动态关键字：<span class="help-shortcut">lighter</span>(更细)、<span class="help-shortcut">bolder</span>(更粗)，不能和数字混用。<br>
+                    <span style="padding-left:24px;">四、实际效果取决于字体文件，老旧字体大多只有400、700两档，其余数值会自动就近兼容。</p>
+                    <p>• <strong>描边粗细</strong>：数值，控制气泡轮廓线条的宽度。</p>
+                    <p>• <strong>描边透明度 / 填充透明度</strong>：<span class="help-shortcut">0 ~ 1</span> 之间的数值，<span class="help-shortcut">0</span> 为完全透明，<span class="help-shortcut">1</span> 为不透明。</p>
+                    <p>• <strong>填充颜色</strong>：气泡底色，支持十六进制颜色或变量（如 <span class="help-shortcut">$tccolor</span>）。</p>
+                    <p>• <strong>文本内容</strong>：预览时显示的文字，导出时晴天格式会替换为 <span class="help-shortcut">$displayText</span>，其他格式保留实际值。</p>
+                    <p>• <strong>画布背景</strong>：整体背景色，可填颜色值或 <span class="help-shortcut">transparent</span>。</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -56,7 +75,7 @@
                 <div class="help-section">
                     <h3>⚠️ 注意事项</h3>
                     <p>• 本工具是<strong>纯静态网页，无法保存数据</strong>，刷新或关闭页面后内容会丢失，请及时导出代码。</p>
-                    <p>• <strong>SVG预览</strong>仅支持纯SVG代码，不支持直接预览阅读格式的气泡（如需预览请点击"气泡预览"）。</p>
+                    <p>• <strong>SVG预览</strong>仅支持纯SVG代码，不支持直接预览阅读格式的气泡（如需预览请点击格式转换按钮）。</p>
                     <p>• 默认图片转SVG工具生成的代码通常较大，会导致气泡文件体积膨胀，可自行替换更优的转换服务。</p>
                     <p>• 上传的图片最好<strong>提前处理</strong>（如去除背景、裁剪多余空白），能有效减小最终代码。</p>
                     <p>• 生成代码的大小主要取决于<strong>图片像素尺寸、压缩等级、是否透明</strong>等因素。测试：上传127KB的图片，最终代码约170KB。</p>
@@ -167,21 +186,21 @@
         <div class="actions">
             <div class="actions-row extract-row">
                 <button id="extractBtn" class="primary">🔍 提取所有颜色</button>
-                <div class="btn-group">
-                    <button id="clearBtn" class="secondary">🗑️ 清空</button>
-                    <button id="copyCodeBtn" class="secondary">📄 复制代码</button>
-                </div>
             </div>
             <div class="actions-row">
-                <div style="display:flex; gap:10px; flex:1;">
-                    <button id="openBubbleBtn" class="secondary" style="flex:1;">🎈 气泡预览</button>
-                    <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为阅读格式</button>
-                </div>
-                <div class="btn-group" id="toolGroup">
-                    <button id="previewSvgBtn" class="secondary">🖼️ 预览 SVG</button>
-                    <button id="toolToggleBtn" class="secondary tool-toggle-btn">
-                        🔧 工具 <span class="arrow">▾</span>
-                    </button>
+                <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
+                <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
+            </div>
+            <div class="actions-row">
+                <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
+            </div>
+            <div class="actions-row">
+                <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
+                <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
+            </div>
+            <div class="actions-row tool-full-row">
+                <div class="btn-group tool-btn-group" id="toolGroup">
+                    <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
                     <div class="sub-row" id="subRow">
                         <button id="toSvgBtn" class="secondary">🔄 图片转 SVG</button>
                         <button id="customLinkBtn" class="secondary">🔗 自定义链接</button>
@@ -230,21 +249,28 @@
 
         <div id="bubbleSection" class="hidden">
             <div class="bubble-header">
-                <h2>🎈 气泡预览</h2>
+                <h2 id="bubbleTitle">🎈 气泡预览</h2>
                 <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <div class="bubble-preview-container">
                 <div class="preview-box" id="bubblePreviewBox"></div>
-                <div class="bubble-controls">
-                    <!-- 所有输入栏宽度统一 160px -->
+                <div class="bubble-controls" id="bubbleControls">
                     <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
                     <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1" style="width:160px;"></div>
                     <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
                     <div class="control-row"><label>字体颜色</label><input type="text" id="textFill" value="字" placeholder="字" style="width:160px;"></div>
                     <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
-                    <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold" style="width:160px;"></div>
+                    <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
                     <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
                     <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
+                    <div class="control-row sunny-only" style="display:none;"><label>描边透明度</label><input type="number" id="strokeOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
+                    <div class="control-row sunny-only" style="display:none;">
+                        <label>填充颜色</label>
+                        <span class="color-preview" id="fillColorPreview"></span>
+                        <input type="color" id="fillColorPicker" class="color-picker" style="display:none;">
+                        <input type="text" id="fillColorInput" value="#ffffff" placeholder="#ffffff" style="width:130px;">
+                    </div>
+                    <div class="control-row sunny-only" style="display:none;"><label>填充透明度</label><input type="number" id="fillOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
                     <div class="control-row">
                         <label>画布背景</label>
                         <span class="color-preview" id="bgColorPreview"></span>

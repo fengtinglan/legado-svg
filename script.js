@@ -11,6 +11,10 @@
         windowHeight = window.innerHeight;
     let toolsOpen = false;
     let currentInputMode = 'code';
+    let isSunnyMode = false;
+
+    // 存储转换后的预览代码（不修改输入框）
+    let currentPreviewCode = null;
 
     const COMPRESS_STORAGE_KEY = 'customCompressUrl';
     const DEFAULT_COMPRESS_URL = 'https://svg.wxeditor.com/tool/svg-compress';
@@ -34,13 +38,14 @@
         imageTabBtn = $('imageTabBtn');
     const bubbleSection = $('bubbleSection'),
         bubblePreviewBox = $('bubblePreviewBox');
+    const bubbleTitle = $('bubbleTitle');
     const textX = $('textX'),
         textY = $('textY'),
         textSize = $('textSize');
     const textFill = $('textFill'),
         textContent = $('textContent'),
         textFont = $('textFont'),
-        textWeight = $('textWeight');  // 新增字体粗细
+        textWeight = $('textWeight');
     const strokeWidth = $('strokeWidth');
     const bgColor = $('bgColor'),
         applyBgColorBtn = $('applyBgColorBtn');
@@ -48,9 +53,18 @@
         exportBubbleBtn = $('exportBubbleBtn');
     const bubbleCodeOutput = $('bubbleCodeOutput');
     const convertReadingBtn = $('convertReadingBtn');
+    const sunnyFormatBtn = $('sunnyFormatBtn');
     const helpModalOverlay = $('helpModalOverlay');
     const helpModalClose = $('helpModalClose');
     const helpBtn = $('helpBtn');
+
+    // 晴天专用控件
+    const strokeOpacityInput = $('strokeOpacity');
+    const fillColorInput = $('fillColorInput');
+    const fillOpacityInput = $('fillOpacity');
+    const fillColorPreview = $('fillColorPreview');
+    const fillColorPicker = $('fillColorPicker');
+    const sunnyControls = document.querySelectorAll('.sunny-only');
 
     // 导出弹窗相关元素
     const exportModalOverlay = $('exportModalOverlay');
@@ -486,6 +500,9 @@
                 imageUploadZone.classList.remove('loading');
                 imageFileInput.value = '';
                 handleExtract();
+                currentPreviewCode = svgCode;
+                isSunnyMode = false;
+                bubbleTitle.textContent = '🎈 气泡预览';
                 openBubbleSection();
                 showToast('✅ 图片气泡已生成，可调整文本', 'success');
             } else {
@@ -514,43 +531,30 @@
     });
 
     function applyBackgroundColor() {
-        const code = input.value.trim();
-        if (!code || !/<svg\b/i.test(code)) { showToast('没有可用的 SVG 代码', 'error'); return; }
+        if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; }
         const targetColor = bgColor.value.trim();
         if (!targetColor) { showToast('请输入背景颜色', 'error'); return; }
         const parser = new DOMParser();
-        const doc = parser.parseFromString(code, 'image/svg+xml');
+        const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml');
         if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
         const svg = doc.documentElement;
         let vb = svg.getAttribute('viewBox');
-        let x = 0,
-            y = 0,
-            w = 1153,
-            h = 1024;
+        let x = 0, y = 0, w = 1153, h = 1024;
         if (vb) {
             const parts = vb.trim().split(/\s+/);
-            if (parts.length === 4) { x = parseFloat(parts[0]);
-                y = parseFloat(parts[1]);
-                w = parseFloat(parts[2]);
-                h = parseFloat(parts[3]); }
+            if (parts.length === 4) { x = parseFloat(parts[0]); y = parseFloat(parts[1]); w = parseFloat(parts[2]); h = parseFloat(parts[3]); }
         } else {
-            const wAttr = svg.getAttribute('width'),
-                hAttr = svg.getAttribute('height');
-            w = wAttr ? parseFloat(wAttr) : w;
-            h = hAttr ? parseFloat(hAttr) : h;
+            const wAttr = svg.getAttribute('width'), hAttr = svg.getAttribute('height');
+            w = wAttr ? parseFloat(wAttr) : w; h = hAttr ? parseFloat(hAttr) : h;
         }
         let bgEl = svg.querySelector('rect[data-bg="true"]');
         if (!bgEl) {
             const paths = svg.querySelectorAll('path');
             for (let p of paths) {
                 const d = p.getAttribute('d');
-                if (d && /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i.test(d
-                        .trim())) {
-                    const m = d.trim().match(
-                        /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i);
-                    if (m && Math.abs(parseFloat(m[1]) - x) < 1 && Math.abs(parseFloat(m[2]) - y) < 1 && Math
-                        .abs(parseFloat(m[3]) - w) < 1 && Math.abs(parseFloat(m[4]) - h) < 1) { bgEl = p;
-                        break; }
+                if (d && /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i.test(d.trim())) {
+                    const m = d.trim().match(/^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i);
+                    if (m && Math.abs(parseFloat(m[1]) - x) < 1 && Math.abs(parseFloat(m[2]) - y) < 1 && Math.abs(parseFloat(m[3]) - w) < 1 && Math.abs(parseFloat(m[4]) - h) < 1) { bgEl = p; break; }
                 }
             }
             if (!bgEl) {
@@ -559,70 +563,78 @@
                 svg.insertBefore(bgEl, svg.firstChild);
             }
         }
-        bgEl.setAttribute('x', x);
-        bgEl.setAttribute('y', y);
-        bgEl.setAttribute('width', w);
-        bgEl.setAttribute('height', h);
+        bgEl.setAttribute('x', x); bgEl.setAttribute('y', y); bgEl.setAttribute('width', w); bgEl.setAttribute('height', h);
         bgEl.setAttribute('fill', targetColor);
         if (bgEl.tagName === 'path') bgEl.setAttribute('stroke', 'none');
         const serializer = new XMLSerializer();
-        input.value = serializer.serializeToString(svg);
-        handleExtract();
+        currentPreviewCode = serializer.serializeToString(svg);
         updateBubblePreview();
         showToast(`✅ 画布背景已设置为 ${targetColor}`, 'success');
     }
 
+    function setSunnyControlsVisibility(visible) {
+        sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; });
+        // 不再隐藏字体粗细，晴天模式也显示
+    }
+
     function updateBubblePreview() {
-        const code = input.value.trim();
-        if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML =
-                '<span style="color:#94a3b8;">无有效SVG</span>'; return; }
+        const code = currentPreviewCode;
+        if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; }
         const parser = new DOMParser();
         const doc = parser.parseFromString(code, 'image/svg+xml');
-        if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML =
-                '<span style="color:#dc2626;">SVG解析错误</span>'; return; }
+        if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>'; return; }
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
         const paths = previewDoc.querySelectorAll('path');
-        paths.forEach(path => {
-            path.setAttribute('stroke-width', strokeWidth.value);
-            const currentStroke = path.getAttribute('stroke');
-            if (currentStroke && !/^(#|rgb|rgba|none|transparent|url)/i.test(currentStroke)) path
-                .setAttribute('stroke', '#000000');
-        });
+        const firstPath = paths[0];
+        if (firstPath) {
+            firstPath.setAttribute('stroke-width', strokeWidth.value);
+            if (isSunnyMode) {
+                firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value);
+                firstPath.setAttribute('fill-opacity', fillOpacityInput.value);
+                firstPath.setAttribute('fill', fillColorInput.value || '#ffffff');
+                firstPath.setAttribute('stroke', '#000000');
+            }
+        }
         const textEl = previewDoc.querySelector('text');
         if (textEl) {
             textEl.setAttribute('x', textX.value);
             textEl.setAttribute('y', textY.value);
             textEl.setAttribute('font-size', textSize.value);
             textEl.setAttribute('font-family', textFont.value);
-            textEl.setAttribute('fill', textFill.value);
-            textEl.setAttribute('font-weight', textWeight.value);  // 新增字体粗细
-            textEl.textContent = textContent.value;
+            textEl.setAttribute('font-weight', textWeight.value);
+            let useColor = textFill.value.trim();
+            if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(useColor) && !/^rgb/i.test(useColor) && !/^hsl/i.test(useColor) && useColor !== 'transparent') {
+                useColor = '#000000';
+            }
+            textEl.setAttribute('fill', useColor);
+            textEl.setAttribute('style', `fill: ${useColor}; opacity: 1;`);
+            textEl.textContent = textContent.value || '927';
         }
         const serializer = new XMLSerializer();
-        const previewSvg = serializer.serializeToString(previewDoc.documentElement);
-        bubblePreviewBox.innerHTML = previewSvg;
+        bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
     }
 
     function openBubbleSection() {
-        const code = input.value.trim();
-        if (!code || !/<svg\b/i.test(code)) { showToast('请先输入或生成有效的 SVG 代码', 'error'); return; }
+        if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
+        const svg = doc.documentElement;
+
+        const textEl = svg.querySelector('text');
         const textInfo = (() => {
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(code, 'image/svg+xml');
-                const textEl = doc.querySelector('text');
-                if (textEl) return {
-                    x: textEl.getAttribute('x') || '0',
-                    y: textEl.getAttribute('y') || '0',
-                    fontSize: textEl.getAttribute('font-size') || '16',
-                    fill: textEl.getAttribute('fill') || '#000',
-                    content: textEl.textContent || '',
-                    fontFamily: textEl.getAttribute('font-family') || 'sans-serif',
-                    weight: textEl.getAttribute('font-weight') || 'bold'  // 新增提取字体粗细
-                };
-            } catch (e) {}
+            if (textEl) return {
+                x: textEl.getAttribute('x') || '0',
+                y: textEl.getAttribute('y') || '0',
+                fontSize: textEl.getAttribute('font-size') || '16',
+                fill: textEl.getAttribute('fill') || '#000',
+                content: textEl.textContent || '',
+                fontFamily: textEl.getAttribute('font-family') || 'sans-serif',
+                weight: textEl.getAttribute('font-weight') || 'bold'
+            };
             return null;
         })();
+
         if (textInfo) {
             textX.value = textInfo.x;
             textY.value = textInfo.y;
@@ -630,66 +642,40 @@
             textFill.value = textInfo.fill;
             textContent.value = '927';
             textFont.value = textInfo.fontFamily;
-            textWeight.value = textInfo.weight;  // 赋值字体粗细
+            textWeight.value = textInfo.weight;
         } else {
-            textX.value = '550';
-            textY.value = '630';
-            textSize.value = '400';
-            textFill.value = '字';
+            textX.value = isSunnyMode ? '13.5' : '550';
+            textY.value = isSunnyMode ? '12' : '630';
+            textSize.value = isSunnyMode ? '10' : '400';
+            textFill.value = isSunnyMode ? '#000000' : '字';
             textContent.value = '927';
-            textFont.value = 'Roboto Condensed';
-            textWeight.value = 'bold';  // 默认值
+            textFont.value = 'Arial, sans-serif';
+            textWeight.value = '500';
         }
-        strokeWidth.value = '6';
-        bgColor.value = (() => {
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(code, 'image/svg+xml');
-                const svg = doc.documentElement;
-                const vb = svg.getAttribute('viewBox');
-                let x = 0,
-                    y = 0,
-                    w = 1153,
-                    h = 1024;
-                if (vb) { const p = vb.trim().split(/\s+/); if (p.length === 4) { x = parseFloat(p[
-                        0
-                    ]);
-                        y = parseFloat(p[1]);
-                        w = parseFloat(p[2]);
-                        h = parseFloat(p[3]); } }
-                const rects = svg.querySelectorAll('rect');
-                for (let r of rects)
-                    if (Math.abs(parseFloat(r.getAttribute('x') || 0) - x) < 1 && Math.abs(parseFloat(r
-                            .getAttribute('y') || 0) - y) < 1 && Math.abs(parseFloat(r.getAttribute(
-                            'width') || 0) - w) < 1 && Math.abs(parseFloat(r.getAttribute('height') ||
-                            0) - h) < 1) return r.getAttribute('fill') || 'transparent';
-                const paths = svg.querySelectorAll('path');
-                for (let p of paths) {
-                    const d = p.getAttribute('d');
-                    if (d && /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i
-                        .test(d.trim())) {
-                        const m = d.trim().match(
-                            /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i
-                            );
-                        if (m && Math.abs(parseFloat(m[1]) - x) < 1 && Math.abs(parseFloat(m[2]) - y) <
-                            1 && Math.abs(parseFloat(m[3]) - w) < 1 && Math.abs(parseFloat(m[4]) - h) <
-                            1) return p.getAttribute('fill') || 'transparent';
-                    }
-                }
-            } catch (e) {}
-            return 'transparent';
-        })();
+
+        const firstPath = svg.querySelector('path');
+        strokeWidth.value = firstPath ? (firstPath.getAttribute('stroke-width') || (isSunnyMode ? '1' : '6')) : (isSunnyMode ? '1' : '6');
+
+        if (isSunnyMode && firstPath) {
+            strokeOpacityInput.value = firstPath.getAttribute('stroke-opacity') || '1';
+            let fillVal = firstPath.getAttribute('fill');
+            if (!fillVal || fillVal === 'none' || fillVal === 'currentColor' || fillVal.startsWith('$')) fillVal = '#ffffff';
+            fillColorInput.value = fillVal;
+            fillOpacityInput.value = firstPath.getAttribute('fill-opacity') || '1';
+            syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+        }
+
+        bgColor.value = 'transparent';
+        setSunnyControlsVisibility(isSunnyMode);
         bubbleSection.classList.remove('hidden');
         updateBubblePreview();
-        showToast('✨ 气泡预览已打开，可调整参数', 'success');
     }
 
     function closeBubbleSection() { bubbleSection.classList.add('hidden');
         bubbleCodeOutput.classList.remove('show'); }
 
-    // 生成应用了用户参数的气泡SVG代码
     function generateBubbleSvg() {
-        const code = input.value.trim();
+        const code = currentPreviewCode;
         if (!code || !/<svg\b/i.test(code)) return null;
         const parser = new DOMParser();
         const doc = parser.parseFromString(code, 'image/svg+xml');
@@ -699,41 +685,47 @@
             textEl.setAttribute('x', textX.value);
             textEl.setAttribute('y', textY.value);
             textEl.setAttribute('font-size', textSize.value);
-            textEl.setAttribute('fill', textFill.value);
             textEl.setAttribute('font-family', textFont.value);
-            textEl.setAttribute('font-weight', textWeight.value);  // 新增字体粗细
-            textEl.textContent = textContent.value;
+            const fillVal = textEl.getAttribute('fill') || '';
+            if (!fillVal.startsWith('$')) textEl.setAttribute('fill', textFill.value);
+            textEl.setAttribute('font-weight', textWeight.value);
+            if (!textEl.textContent.startsWith('$')) textEl.textContent = textContent.value;
+            const style = textEl.getAttribute('style');
+            if (style) {
+                textEl.setAttribute('style', fillVal.startsWith('$') ? style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;') : style.replace(/fill:\s*[^;]+;?/g, `fill: ${textFill.value};`));
+            }
         }
-        // 应用描边粗细
         const paths = doc.querySelectorAll('path');
-        paths.forEach(path => {
-            path.setAttribute('stroke-width', strokeWidth.value);
-        });
+        if (paths.length > 0) {
+            const firstPath = paths[0];
+            firstPath.setAttribute('stroke-width', strokeWidth.value);
+            if (isSunnyMode) {
+                firstPath.setAttribute('stroke', '$color');
+                firstPath.setAttribute('fill', '$tccolor');
+                firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value);
+                firstPath.setAttribute('fill-opacity', fillOpacityInput.value);
+                const style = firstPath.getAttribute('style');
+                if (style) firstPath.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;'));
+            }
+        }
         const serializer = new XMLSerializer();
         return serializer.serializeToString(doc.documentElement);
     }
 
-    // 打开导出弹窗
     function openExportModal() {
-        const code = input.value.trim();
-        if (!code || !/<svg\b/i.test(code)) { showToast('没有可导出的 SVG 代码', 'error'); return; }
         const svgCode = generateBubbleSvg();
-        if (!svgCode) { showToast('SVG 解析失败', 'error'); return; }
-        // 更新代码预览
+        if (!svgCode) { showToast('没有可导出的代码', 'error'); return; }
         bubbleCodeOutput.textContent = svgCode;
         bubbleCodeOutput.classList.add('show');
-        // 存储当前生成的代码供弹窗按钮使用
         exportModalOverlay._svgCode = svgCode;
         exportModalOverlay.classList.add('active');
     }
 
-    // 关闭导出弹窗
     function closeExportModal() {
         exportModalOverlay.classList.remove('active');
         delete exportModalOverlay._svgCode;
     }
 
-    // 复制代码到剪贴板
     function exportCopyCode() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可复制的代码', 'error'); return; }
@@ -741,7 +733,6 @@
         closeExportModal();
     }
 
-    // 导出为TXT文件
     function exportAsTxt() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可导出的代码', 'error'); return; }
@@ -750,7 +741,6 @@
         closeExportModal();
     }
 
-    // 导出为SVG文件
     function exportAsSvg() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可导出的代码', 'error'); return; }
@@ -759,37 +749,25 @@
         closeExportModal();
     }
 
-    // 触发文件下载
     function triggerDownload(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 300);
+        a.href = url; a.download = filename; a.style.display = 'none';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
     }
 
-    // 导出弹窗事件绑定
     exportBubbleBtn.addEventListener('click', openExportModal);
     exportModalClose.addEventListener('click', closeExportModal);
-    exportModalOverlay.addEventListener('click', e => {
-        if (e.target === exportModalOverlay) closeExportModal();
-    });
+    exportModalOverlay.addEventListener('click', e => { if (e.target === exportModalOverlay) closeExportModal(); });
     exportCopyCodeBtn.addEventListener('click', exportCopyCode);
     exportTxtBtn.addEventListener('click', exportAsTxt);
     exportSvgBtn.addEventListener('click', exportAsSvg);
 
-    function exportBubbleFormat() {
-        openExportModal();
-    }
-
+    // 晋江格式
     function convertToReadingFormat() {
+        isSunnyMode = false;
         const code = input.value.trim();
         if (!code || !/<svg\b/i.test(code)) { showToast('请先输入有效的 SVG 代码', 'error'); return; }
         const parser = new DOMParser();
@@ -797,67 +775,117 @@
         if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
         const svg = doc.documentElement;
         let vb = svg.getAttribute('viewBox');
-        let minX = 0,
-            minY = 0,
-            width = 1153,
-            height = 1024;
-        if (vb) { const parts = vb.trim().split(/\s+/); if (parts.length === 4) { minX = parseFloat(parts[
-                0]);
-                minY = parseFloat(parts[1]);
-                width = parseFloat(parts[2]);
-                height = parseFloat(parts[3]); } } else { const wAttr = svg.getAttribute('width'),
-                hAttr = svg.getAttribute('height');
-            width = wAttr ? parseFloat(wAttr) : width;
-            height = hAttr ? parseFloat(hAttr) : height; }
+        let minX = 0, minY = 0, width = 1153, height = 1024;
+        if (vb) { const parts = vb.trim().split(/\s+/); if (parts.length === 4) { minX = parseFloat(parts[0]); minY = parseFloat(parts[1]); width = parseFloat(parts[2]); height = parseFloat(parts[3]); } }
+        else { const wAttr = svg.getAttribute('width'), hAttr = svg.getAttribute('height'); width = wAttr ? parseFloat(wAttr) : width; height = hAttr ? parseFloat(hAttr) : height; }
         const imageEl = svg.querySelector('image');
-        if (imageEl) {
-            imageEl.setAttribute('x', minX);
-            imageEl.setAttribute('y', minY);
-            imageEl.setAttribute('width', width);
-            imageEl.setAttribute('height', height);
-        }
-        const cx = minX + width / 2;
-        const cy = minY + height / 2;
+        if (imageEl) { imageEl.setAttribute('x', minX); imageEl.setAttribute('y', minY); imageEl.setAttribute('width', width); imageEl.setAttribute('height', height); }
+        const cx = minX + width / 2, cy = minY + height / 2;
         let textEl = svg.querySelector('text');
-        if (!textEl) {
-            textEl = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
-            svg.appendChild(textEl);
-        }
-        textEl.setAttribute('x', cx);
-        textEl.setAttribute('y', cy);
-        textEl.setAttribute('text-anchor', 'middle');
-        textEl.setAttribute('dominant-baseline', 'middle');
+        if (!textEl) { textEl = doc.createElementNS('http://www.w3.org/2000/svg', 'text'); svg.appendChild(textEl); }
+        textEl.setAttribute('x', cx); textEl.setAttribute('y', cy);
+        textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle');
         if (!textEl.getAttribute('font-size')) textEl.setAttribute('font-size', '42');
-        textEl.setAttribute('fill', '字');
-        textEl.setAttribute('font-weight', 'bold');  // 阅读格式默认加粗
+        textEl.setAttribute('fill', '字'); textEl.setAttribute('font-weight', 'bold');
         textEl.textContent = '数量';
         const serializer = new XMLSerializer();
-        input.value = serializer.serializeToString(svg);
-        handleExtract();
+        currentPreviewCode = serializer.serializeToString(svg);
+        bubbleTitle.textContent = '📐 晋江气泡预览';
         openBubbleSection();
-        showToast('✅ 已转换为阅读格式，可微调后导出', 'success');
+        showToast('✅ 已转换为晋江格式，可微调后导出', 'success');
+    }
+
+    // 晴天格式
+    function handleSunnyFormat() {
+        isSunnyMode = true;
+        const code = input.value.trim();
+        if (!code || !/<svg\b/i.test(code)) { showToast('请先输入有效的 SVG 代码', 'error'); return; }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
+        const svg = doc.documentElement;
+
+        const vb = svg.getAttribute('viewBox') || '0 0 1153 1024';
+        const vbParts = vb.trim().split(/\s+/);
+        const centerX = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2;
+        const centerY = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+
+        const paths = svg.querySelectorAll('path');
+        paths.forEach(p => {
+            const stroke = p.getAttribute('stroke');
+            if (stroke && stroke !== 'none' && stroke !== 'currentColor' && !/^\$/.test(stroke)) p.setAttribute('stroke', '$color');
+            const fill = p.getAttribute('fill');
+            if (fill && fill !== 'none' && fill !== 'currentColor' && !/^\$/.test(fill)) p.setAttribute('fill', '$tccolor');
+            const style = p.getAttribute('style');
+            if (style) p.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;'));
+        });
+
+        const textEl = svg.querySelector('text');
+        let origFill = '#000000', origFontSize = '10', origFontFamily = 'Arial', origWeight = '500';
+        if (textEl) {
+            origFill = textEl.getAttribute('fill') || origFill;
+            origFontSize = textEl.getAttribute('font-size') || origFontSize;
+            origFontFamily = textEl.getAttribute('font-family') || origFontFamily;
+            origWeight = textEl.getAttribute('font-weight') || origWeight;
+            textEl.setAttribute('fill', '$fontcolor');
+            textEl.textContent = '$displayText';
+            textEl.setAttribute('x', centerX);
+            textEl.setAttribute('y', centerY);
+            const style = textEl.getAttribute('style');
+            if (style) textEl.setAttribute('style', style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;'));
+        } else {
+            const newText = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+            newText.setAttribute('x', centerX); newText.setAttribute('y', centerY);
+            newText.setAttribute('fill', '$fontcolor'); newText.setAttribute('font-family', 'Arial, sans-serif');
+            newText.setAttribute('font-size', '10'); newText.setAttribute('font-weight', '500');
+            newText.textContent = '$displayText';
+            svg.appendChild(newText);
+        }
+
+        const serializer = new XMLSerializer();
+        currentPreviewCode = serializer.serializeToString(svg);
+        bubbleTitle.textContent = '☀️ 晴天气泡预览';
+        textX.value = centerX;
+        textY.value = centerY;
+        textSize.value = origFontSize;
+        textFill.value = origFill;
+        textContent.value = '927';
+        textFont.value = origFontFamily;
+        textWeight.value = origWeight;
+        if (paths.length > 0) {
+            const firstPath = paths[0];
+            strokeWidth.value = firstPath.getAttribute('stroke-width') || '1';
+            strokeOpacityInput.value = firstPath.getAttribute('stroke-opacity') || '1';
+            let fillVal = firstPath.getAttribute('fill');
+            if (!fillVal || fillVal === 'none' || fillVal.startsWith('$')) fillVal = '#ffffff';
+            fillColorInput.value = fillVal;
+            fillOpacityInput.value = firstPath.getAttribute('fill-opacity') || '1';
+            syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+        }
+
+        setSunnyControlsVisibility(true);
+        bubbleSection.classList.remove('hidden');
+        updateBubblePreview();
+        showToast('☀️ 已转为晴天格式（颜色已替换为变量）', 'success');
     }
 
     applyBgColorBtn.addEventListener('click', applyBackgroundColor);
-    $('openBubbleBtn').addEventListener('click', openBubbleSection);
     convertReadingBtn.addEventListener('click', convertToReadingFormat);
+    sunnyFormatBtn.addEventListener('click', handleSunnyFormat);
     $('closeBubbleBtn').addEventListener('click', closeBubbleSection);
     applyBubbleBtn.addEventListener('click', updateBubblePreview);
-    // 增加 textWeight 的监听
-    [textX, textY, textSize, textFill, textContent, textFont, textWeight, strokeWidth].forEach(el => { el.addEventListener(
-            'input', updateBubblePreview); });
+    [textX, textY, textSize, textFill, textContent, textFont, textWeight, strokeWidth].forEach(el => { el.addEventListener('input', updateBubblePreview); });
+    strokeOpacityInput.addEventListener('input', updateBubblePreview);
+    fillColorInput.addEventListener('input', updateBubblePreview);
+    fillOpacityInput.addEventListener('input', updateBubblePreview);
 
     $('extractBtn').addEventListener('click', handleExtract);
     $('clearBtn').addEventListener('click', clearAll);
     $('copyCodeBtn').addEventListener('click', copyCode);
     $('copyColorBtn').addEventListener('click', copyColors);
     $('previewSvgBtn').addEventListener('click', previewSvg);
-    $('selectAllBtn').addEventListener('click', () => { document.querySelectorAll('.color-checkbox').forEach(
-            cb => cb.checked = true);
-        updateSelectedCount(); });
-    $('deselectAllBtn').addEventListener('click', () => { document.querySelectorAll('.color-checkbox').forEach(
-            cb => cb.checked = false);
-        updateSelectedCount(); });
+    $('selectAllBtn').addEventListener('click', () => { document.querySelectorAll('.color-checkbox').forEach(cb => cb.checked = true); updateSelectedCount(); });
+    $('deselectAllBtn').addEventListener('click', () => { document.querySelectorAll('.color-checkbox').forEach(cb => cb.checked = false); updateSelectedCount(); });
     $('replaceBtn').addEventListener('click', performReplace);
     $('toSvgBtn').addEventListener('click', openToSvgModal);
     $('customLinkBtn').addEventListener('click', customLink);
@@ -868,9 +896,7 @@
 
     // 拖拽逻辑
     let dragStartY, dragStartHeight, isDragging = false;
-
     function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
-
     function onDragStart(e) {
         if (!$('toSvgModal').classList.contains('active')) return;
         if (e.target.closest('.upload-zone') || e.target.closest('textarea')) return;
@@ -882,7 +908,6 @@
         $('drawerContent').style.transition = 'none';
         document.body.style.userSelect = 'none';
     }
-
     function onDragMove(e) {
         if (!isDragging) return;
         e.preventDefault();
@@ -891,7 +916,6 @@
         newHeight = Math.max(20, newHeight);
         $('drawerContent').style.height = newHeight + 'px';
     }
-
     function onDragEnd() {
         if (!isDragging) return;
         isDragging = false;
@@ -900,20 +924,10 @@
         $('drawerContent').style.transition = '';
         const finalHeight = parseFloat($('drawerContent').style.height) || getHalfHeight();
         const ratio = finalHeight / windowHeight;
-
-        if (ratio < CLOSE_RATIO) {
-            closeToSvgModal();
-            return;
-        }
-        if (ratio >= FULL_TRIGGER_RATIO) {
-            $('drawerContent').style.height = getFullHeight() + 'px';
-            setUIMode(true, true);
-            return;
-        }
-        $('drawerContent').style.height = finalHeight + 'px';
-        setUIMode(false, true);
+        if (ratio < CLOSE_RATIO) { closeToSvgModal(); return; }
+        if (ratio >= FULL_TRIGGER_RATIO) { $('drawerContent').style.height = getFullHeight() + 'px'; setUIMode(true, true); return; }
+        $('drawerContent').style.height = finalHeight + 'px'; setUIMode(false, true);
     }
-
     const handle = $('drawerHandle');
     handle.addEventListener('touchstart', onDragStart, { passive: false });
     handle.addEventListener('mousedown', onDragStart);
@@ -933,71 +947,63 @@
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             if (exportModalOverlay.classList.contains('active')) { closeExportModal(); }
-            if (helpModalOverlay.classList.contains('active')) { helpModalOverlay.classList.remove(
-                'active'); }
+            if (helpModalOverlay.classList.contains('active')) { helpModalOverlay.classList.remove('active'); }
             if ($('svgModal').classList.contains('active')) closeModal();
             if ($('toSvgModal').classList.contains('active')) closeToSvgModal();
             if (toolsOpen) toggleTools();
             if (!bubbleSection.classList.contains('hidden')) closeBubbleSection();
         }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && document.activeElement === input) { e
-                .preventDefault();
-            handleExtract(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && document.activeElement === input) { e.preventDefault(); handleExtract(); }
     });
-    replaceInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault();
-            performReplace(); } });
+    replaceInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); performReplace(); } });
 
     helpBtn.addEventListener('click', () => { helpModalOverlay.classList.add('active'); });
     helpModalClose.addEventListener('click', () => { helpModalOverlay.classList.remove('active'); });
-    helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay
-            .classList.remove('active'); });
+    helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active'); });
 
-    // ===== 颜色预览和选择器逻辑 =====
+    // 颜色预览逻辑
     function syncColorPreview(inputEl, previewEl, pickerEl) {
         const val = inputEl.value.trim();
         if (/^#[0-9a-fA-F]{3,8}$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val === 'transparent') {
             previewEl.style.backgroundColor = val;
-        } else if (val === '') {
-            previewEl.style.backgroundColor = 'transparent';
-        } else {
-            previewEl.style.backgroundColor = '#ccc';
-        }
-        if (pickerEl && /^#[0-9a-fA-F]{6}$/.test(val)) {
-            pickerEl.value = val;
-        }
+        } else if (val === '') { previewEl.style.backgroundColor = 'transparent'; }
+        else { previewEl.style.backgroundColor = '#ccc'; }
+        if (pickerEl && /^#[0-9a-fA-F]{6}$/.test(val)) { pickerEl.value = val; }
     }
 
-    // 画布背景
     const bgColorPreview = document.getElementById('bgColorPreview');
     const bgColorPicker = document.getElementById('bgColorPicker');
     bgColorPreview.setAttribute('data-clickable', 'true');
     bgColorPreview.addEventListener('click', () => bgColorPicker.click());
     bgColor.addEventListener('input', () => syncColorPreview(bgColor, bgColorPreview, bgColorPicker));
-    bgColorPicker.addEventListener('input', () => {
-        bgColor.value = bgColorPicker.value;
-        syncColorPreview(bgColor, bgColorPreview, bgColorPicker);
-    });
+    bgColorPicker.addEventListener('input', () => { bgColor.value = bgColorPicker.value; syncColorPreview(bgColor, bgColorPreview, bgColorPicker); });
     syncColorPreview(bgColor, bgColorPreview, bgColorPicker);
 
-    // 替换颜色
     const replaceColorPreview = document.getElementById('replaceColorPreview');
     const replaceColorPicker = document.getElementById('replaceColorPicker');
     replaceColorPreview.setAttribute('data-clickable', 'true');
     replaceColorPreview.addEventListener('click', () => replaceColorPicker.click());
     replaceInput.addEventListener('input', () => syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker));
-    replaceColorPicker.addEventListener('input', () => {
-        replaceInput.value = replaceColorPicker.value;
-        syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker);
-    });
+    replaceColorPicker.addEventListener('input', () => { replaceInput.value = replaceColorPicker.value; syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker); });
     syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker);
+
+    // 填充颜色预览绑定
+    fillColorPreview.setAttribute('data-clickable', 'true');
+    fillColorPreview.addEventListener('click', () => fillColorPicker.click());
+    fillColorInput.addEventListener('input', () => {
+        syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+        updateBubblePreview();
+    });
+    fillColorPicker.addEventListener('input', () => {
+        fillColorInput.value = fillColorPicker.value;
+        syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+        updateBubblePreview();
+    });
+    syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
 
     updateLinkStatus();
     updateCompressLinkStatus();
-    input.value =
-        `<svg viewBox="0 0 1153 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-  <path d="M1050.528497 512c10.611399-2.65285 21.222798-10.611399 26.528498-18.569948 5.305699-7.958549 7.958549-21.222798 5.305699-31.834197-5.305699-21.222798-29.181347-34.487047-50.404145-29.181347l-23.875647 5.305699c-2.65285-26.528497-7.958549-50.404145-18.569949-74.279792-21.222798-55.709845-58.362694-103.46114-108.766839-140.601037-5.305699-42.445596-10.611399-79.585492-18.569948-108.766839-15.917098-61.015544-39.792746-95.502591-71.626943-106.11399-21.222798-7.958549-45.098446-5.305699-68.974093 7.958549-15.917098 7.958549-31.834197 21.222798-47.751296 39.792747-18.569948 21.222798-39.792746 47.751295-63.668394 79.585492-50.404145-2.65285-100.80829 2.65285-148.559585 13.264248-53.056995 13.264249-103.46114 29.181347-151.212435 53.056995-31.834197-23.875648-63.668394-42.445596-87.544042-55.709844-21.222798-10.611399-39.792746-15.917098-58.362694-18.569948-26.528497-2.65285-47.751295 5.305699-63.668394 21.222797-29.181347 29.181347-37.139896 76.932642-26.528497 153.865285 5.305699 34.487047 13.264249 74.279793 26.528497 114.072539-15.917098 39.792746-23.875648 82.238342-23.875648 127.336788v10.611399h-29.181347c-13.264249 0-23.875648 5.305699-31.834197 13.264249-7.958549 7.958549-13.264249 18.569948-10.611399 29.181347 0 23.875648 21.222798 42.445596 45.098446 42.445596h42.445596l15.917098 39.792746-18.569948 5.305699c-13.264249 2.65285-23.875648 10.611399-29.181347 21.222798-5.305699 7.958549-5.305699 18.569948 0 29.181347 7.958549 15.917098 23.875648 23.875648 42.445596 23.875648 5.305699 0 7.958549 0 13.264249-2.65285l39.792746-10.611399c18.569948 21.222798 42.445596 39.792746 68.974093 58.362695 74.279793 45.098446 164.476684 68.974093 270.590674 68.974093 34.487047 0 68.974093-2.65285 106.113989-7.958549 145.906736-21.222798 267.937824-87.544041 342.217617-191.005182 7.958549-10.611399 15.917098-23.875648 23.875647-37.139896h2.65285l58.362694 2.65285h2.65285c13.264249 0 26.528497-5.305699 37.139897-13.264249 7.958549-7.958549 10.611399-18.569948 10.611399-29.181347 0-23.875648-23.875648-42.445596-50.404146-42.445596h-23.875647c2.65285-13.264249 5.305699-23.875648 7.958549-37.139897l37.139896-5.305699z m-896.663212 31.834197c0-37.139896 7.958549-74.279793 23.875648-108.766839l5.305699-13.264249-5.305699-15.917099c-13.264249-42.445596-23.875648-82.238342-26.528498-116.725388-7.958549-47.751295-2.65285-71.626943 2.65285-82.238342 7.958549 0 18.569948 5.305699 31.834197 10.611399 26.528497 13.264249 58.362694 31.834197 95.502591 61.015544l21.222797 15.917098 23.875648-13.264248c45.098446-26.528497 95.502591-45.098446 151.212435-58.362695 47.751295-10.611399 100.80829-15.917098 148.559586-10.611399l23.875648 2.65285 13.264248-21.222798c23.875648-37.139896 45.098446-66.321244 66.321244-87.544041 13.264249-15.917098 23.875648-21.222798 29.181347-23.875648h2.65285c0 2.65285 2.65285 5.305699 5.305699 7.958549 5.305699 10.611399 10.611399 23.875648 15.917099 42.445596 7.958549 29.181347 15.917098 68.974093 18.569948 114.072539l2.65285 18.569948 15.917098 10.611399c45.098446 29.181347 76.932642 68.974093 92.849741 114.072539 29.181347 74.279793 13.264249 164.476684-39.792746 238.756477-61.015544 84.891192-164.476684 140.601036-289.160622 159.170984-145.906736 21.222798-275.896373-7.958549-355.481865-74.279793-47.751295-45.098446-74.279793-103.46114-74.279793-169.782383z" stroke="边" fill="none"></path>
-  <text x="550" y="630" font-family="Roboto Condensed" text-anchor="middle" dominant-baseline="middle" font-size="400" font-weight="bold" fill="字">数量</text>
-</svg>`;
+    input.value = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" data-swindex="0" d="M12.4 19a4.2 4.2 0 0 1-1.57-.298L7 21v-3.134a2.668 2.668 0 0 1-1.795-3.773A4.8 4.8 0 0 1 8.113 5.16a5.335 5.335 0 0 1 9.194 1.078a5.333 5.333 0 0 1 3.404 8.771M16 19h6"/></svg>`;
     setInputMode('code');
     setTimeout(handleExtract, 50);
 })();

@@ -515,7 +515,7 @@ textarea.drag-over {
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
-    align-items: flex-start;
+    align-items: flex-start;   /* 新增 */
 }
 .preview-box {
     width: 200px;
@@ -523,10 +523,7 @@ textarea.drag-over {
     border: 2px solid #e2e8f0;
     border-radius: 16px;
     background-color: #ffffff;
-    background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
-        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
-        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-image: linear-gradient(...);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     display: flex;
@@ -534,6 +531,9 @@ textarea.drag-over {
     justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
+    position: sticky;      /* 新增 */
+    top: 10px;             /* 新增：距离顶部10px */
+    z-index: 5;            /* 新增：避免被其他元素遮挡 */
 }
 .preview-box svg {
     width: 100%;
@@ -1109,6 +1109,36 @@ textarea.drag-over {
 }
 .replace-area .color-picker {
     margin-left: 2px;
+}
+
+/* ========== 工具整行布局 ========== */
+.actions-row.tool-full-row {
+    flex-direction: column;
+    align-items: stretch;
+}
+.tool-btn-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.tool-btn-group > button {
+    width: 100% !important;
+}
+.btn-group.stacked.tool-btn-group > button {
+    width: 100% !important;
+}
+.actions-row.tool-full-row .btn-group {
+    flex: 1;
+    width: 100%;
+}
+
+/* 晴天格式控件显示控制 */
+.sunny-only {
+    display: none;
+}
+.sunny-only.visible {
+    display: flex;
 }
 
 @media (max-width: 740px) {
