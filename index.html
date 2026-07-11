@@ -217,7 +217,11 @@
             <div id="resultDisplay"><div class="empty-state">等待提取…</div></div>
             <div id="replaceArea" class="hidden">
                 <div class="replace-area">
-                    <label>替换为：<input type="text" id="replaceInput" placeholder="#000000 或 空"></label>
+                    <label>替换为：
+                        <span class="color-preview" id="replaceColorPreview"></span>
+                        <input type="color" id="replaceColorPicker" class="color-picker" style="display:none;">
+                        <input type="text" id="replaceInput" placeholder="#000000 或 空" style="width:110px;">
+                    </label>
                     <button id="replaceBtn">⚡ 替换选中的颜色</button>
                     <span id="replaceStatus"></span>
                 </div>
@@ -232,15 +236,18 @@
             <div class="bubble-preview-container">
                 <div class="preview-box" id="bubblePreviewBox"></div>
                 <div class="bubble-controls">
-                    <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1"></div>
-                    <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1"></div>
-                    <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1"></div>
-                    <div class="control-row"><label>字体颜色</label><input type="text" id="textFill" value="字" placeholder="字"></div>
-                    <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称"></div>
-                    <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0"></div>
-                    <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本"></div>
+                    <!-- 所有输入栏宽度统一 160px -->
+                    <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
+                    <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1" style="width:160px;"></div>
+                    <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
+                    <div class="control-row"><label>字体颜色</label><input type="text" id="textFill" value="字" placeholder="字" style="width:160px;"></div>
+                    <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
+                    <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
+                    <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
                     <div class="control-row">
                         <label>画布背景</label>
+                        <span class="color-preview" id="bgColorPreview"></span>
+                        <input type="color" id="bgColorPicker" class="color-picker" style="display:none;">
                         <input type="text" id="bgColor" value="transparent" placeholder="transparent / #ffffff" style="width:130px;">
                         <button id="applyBgColorBtn" class="btn-apply" style="padding:6px 14px; font-size:0.85rem;">应用</button>
                     </div>

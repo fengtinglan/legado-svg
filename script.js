@@ -12,7 +12,6 @@
     let toolsOpen = false;
     let currentInputMode = 'code';
 
-
     const COMPRESS_STORAGE_KEY = 'customCompressUrl';
     const DEFAULT_COMPRESS_URL = 'https://svg.wxeditor.com/tool/svg-compress';
     const $ = id => document.getElementById(id);
@@ -87,7 +86,6 @@
             linkEl.title = url;
         }
     }
-
 
     function getSvgUrl() { return localStorage.getItem(STORAGE_KEY) || DEFAULT_URL; }
 
@@ -286,18 +284,15 @@
         setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000);
     }
 
-    // 平滑关闭动画
     function closeToSvgModal() {
-    const modal = $('toSvgModal');
-    // 添加关闭动画类，触发滑出
-    modal.classList.add('closing');
-    // 动画结束后移除类和 active，并重置高度
-    setTimeout(() => {
-        modal.classList.remove('active', 'closing');
-        $('drawerContent').style.height = getHalfHeight() + 'px';
-        setUIMode(false, false);
-    }, 300); // 与 CSS transition 时长一致
-}
+        const modal = $('toSvgModal');
+        modal.classList.add('closing');
+        setTimeout(() => {
+            modal.classList.remove('active', 'closing');
+            $('drawerContent').style.height = getHalfHeight() + 'px';
+            setUIMode(false, false);
+        }, 300);
+    }
 
     function customLink() {
         const current = getSvgUrl();
@@ -598,7 +593,7 @@
             textEl.setAttribute('y', textY.value);
             textEl.setAttribute('font-size', textSize.value);
             textEl.setAttribute('font-family', textFont.value);
-            textEl.setAttribute('fill', '#000000');
+            textEl.setAttribute('fill', textFill.value);
             textEl.textContent = textContent.value;
         }
         const serializer = new XMLSerializer();
@@ -784,9 +779,7 @@
     exportTxtBtn.addEventListener('click', exportAsTxt);
     exportSvgBtn.addEventListener('click', exportAsSvg);
 
-    // 旧的exportBubbleFormat不再直接绑定，保留函数供可能的其他地方使用
     function exportBubbleFormat() {
-        // 此函数保留以兼容，实际导出弹窗已替代其功能
         openExportModal();
     }
 
@@ -843,7 +836,6 @@
     convertReadingBtn.addEventListener('click', convertToReadingFormat);
     $('closeBubbleBtn').addEventListener('click', closeBubbleSection);
     applyBubbleBtn.addEventListener('click', updateBubblePreview);
-    // exportBubbleBtn 已在上方重新绑定到 openExportModal
     [textX, textY, textSize, textFill, textContent, textFont, strokeWidth].forEach(el => { el.addEventListener(
             'input', updateBubblePreview); });
 
@@ -866,6 +858,7 @@
     $('svgModal').addEventListener('click', e => { if (e.target === $('svgModal')) closeModal(); });
     $('toSvgModal').addEventListener('click', e => { if (e.target === $('toSvgModal')) closeToSvgModal(); });
 
+    // 拖拽逻辑
     let dragStartY, dragStartHeight, isDragging = false;
 
     function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
@@ -887,7 +880,6 @@
         e.preventDefault();
         const delta = getClientY(e) - dragStartY;
         let newHeight = dragStartHeight - delta;
-        // 完全不限制上限，仅保底最小高度20px
         newHeight = Math.max(20, newHeight);
         $('drawerContent').style.height = newHeight + 'px';
     }
@@ -901,18 +893,15 @@
         const finalHeight = parseFloat($('drawerContent').style.height) || getHalfHeight();
         const ratio = finalHeight / windowHeight;
 
-        // 低于关闭阈值：关闭弹窗（带动画）
         if (ratio < CLOSE_RATIO) {
             closeToSvgModal();
             return;
         }
-        // 超过全屏阈值：自动全屏
         if (ratio >= FULL_TRIGGER_RATIO) {
             $('drawerContent').style.height = getFullHeight() + 'px';
             setUIMode(true, true);
             return;
         }
-        // 中间位置：保持当前高度
         $('drawerContent').style.height = finalHeight + 'px';
         setUIMode(false, true);
     }
@@ -955,7 +944,45 @@
     helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay
             .classList.remove('active'); });
 
-    updateLinkStatus();
+    // ===== 颜色预览和选择器逻辑 =====
+    function syncColorPreview(inputEl, previewEl, pickerEl) {
+        const val = inputEl.value.trim();
+        if (/^#[0-9a-fA-F]{3,8}$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val === 'transparent') {
+            previewEl.style.backgroundColor = val;
+        } else if (val === '') {
+            previewEl.style.backgroundColor = 'transparent';
+        } else {
+            previewEl.style.backgroundColor = '#ccc';
+        }
+        if (pickerEl && /^#[0-9a-fA-F]{6}$/.test(val)) {
+            pickerEl.value = val;
+        }
+    }
+
+    // 画布背景
+    const bgColorPreview = document.getElementById('bgColorPreview');
+    const bgColorPicker = document.getElementById('bgColorPicker');
+    bgColorPreview.setAttribute('data-clickable', 'true');
+    bgColorPreview.addEventListener('click', () => bgColorPicker.click());
+    bgColor.addEventListener('input', () => syncColorPreview(bgColor, bgColorPreview, bgColorPicker));
+    bgColorPicker.addEventListener('input', () => {
+        bgColor.value = bgColorPicker.value;
+        syncColorPreview(bgColor, bgColorPreview, bgColorPicker);
+    });
+    syncColorPreview(bgColor, bgColorPreview, bgColorPicker);
+
+    // 替换颜色
+    const replaceColorPreview = document.getElementById('replaceColorPreview');
+    const replaceColorPicker = document.getElementById('replaceColorPicker');
+    replaceColorPreview.setAttribute('data-clickable', 'true');
+    replaceColorPreview.addEventListener('click', () => replaceColorPicker.click());
+    replaceInput.addEventListener('input', () => syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker));
+    replaceColorPicker.addEventListener('input', () => {
+        replaceInput.value = replaceColorPicker.value;
+        syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker);
+    });
+    syncColorPreview(replaceInput, replaceColorPreview, replaceColorPicker);
+
     updateLinkStatus();
     updateCompressLinkStatus();
     input.value =

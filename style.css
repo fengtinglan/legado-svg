@@ -730,6 +730,15 @@ textarea.drag-over {
 .modal-overlay.drawer.active .modal-content {
     transform: translateY(0);
 }
+/* 抽屉关闭动画 */
+.modal-overlay.drawer.closing .modal-content {
+    transition: transform 0.3s cubic-bezier(0.55, 0, 1, 0.45);
+    transform: translateY(100%);
+}
+.modal-overlay.drawer.closing {
+    transition: background 0.3s;
+    background: rgba(0, 0, 0, 0);
+}
 .drawer-handle {
     width: 80px;
     height: 8px;
@@ -1066,14 +1075,40 @@ textarea.drag-over {
     padding: 4px 0 0;
 }
 
-/* ========== 抽屉关闭动画 ========== */
-.modal-overlay.drawer.closing .modal-content {
-    transition: transform 0.3s cubic-bezier(0.55, 0, 1, 0.45);
-    transform: translateY(100%);
+/* 颜色预览和选择器 */
+.color-preview {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    flex-shrink: 0;
+    vertical-align: middle;
+    margin: 0 2px;
 }
-.modal-overlay.drawer.closing {
-    transition: background 0.3s;
-    background: rgba(0, 0, 0, 0);
+.color-preview[data-clickable="true"] {
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+.color-preview[data-clickable="true"]:hover {
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+}
+.color-picker {
+    width: 24px;
+    height: 24px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.control-row .color-picker {
+    margin-left: -2px;
+}
+.replace-area .color-picker {
+    margin-left: 2px;
 }
 
 @media (max-width: 740px) {
