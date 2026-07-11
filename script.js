@@ -39,7 +39,8 @@
         textSize = $('textSize');
     const textFill = $('textFill'),
         textContent = $('textContent'),
-        textFont = $('textFont');
+        textFont = $('textFont'),
+        textWeight = $('textWeight');  // 新增字体粗细
     const strokeWidth = $('strokeWidth');
     const bgColor = $('bgColor'),
         applyBgColorBtn = $('applyBgColorBtn');
@@ -594,6 +595,7 @@
             textEl.setAttribute('font-size', textSize.value);
             textEl.setAttribute('font-family', textFont.value);
             textEl.setAttribute('fill', textFill.value);
+            textEl.setAttribute('font-weight', textWeight.value);  // 新增字体粗细
             textEl.textContent = textContent.value;
         }
         const serializer = new XMLSerializer();
@@ -615,7 +617,8 @@
                     fontSize: textEl.getAttribute('font-size') || '16',
                     fill: textEl.getAttribute('fill') || '#000',
                     content: textEl.textContent || '',
-                    fontFamily: textEl.getAttribute('font-family') || 'sans-serif'
+                    fontFamily: textEl.getAttribute('font-family') || 'sans-serif',
+                    weight: textEl.getAttribute('font-weight') || 'bold'  // 新增提取字体粗细
                 };
             } catch (e) {}
             return null;
@@ -627,6 +630,7 @@
             textFill.value = textInfo.fill;
             textContent.value = '927';
             textFont.value = textInfo.fontFamily;
+            textWeight.value = textInfo.weight;  // 赋值字体粗细
         } else {
             textX.value = '550';
             textY.value = '630';
@@ -634,6 +638,7 @@
             textFill.value = '字';
             textContent.value = '927';
             textFont.value = 'Roboto Condensed';
+            textWeight.value = 'bold';  // 默认值
         }
         strokeWidth.value = '6';
         bgColor.value = (() => {
@@ -696,6 +701,7 @@
             textEl.setAttribute('font-size', textSize.value);
             textEl.setAttribute('fill', textFill.value);
             textEl.setAttribute('font-family', textFont.value);
+            textEl.setAttribute('font-weight', textWeight.value);  // 新增字体粗细
             textEl.textContent = textContent.value;
         }
         // 应用描边粗细
@@ -823,6 +829,7 @@
         textEl.setAttribute('dominant-baseline', 'middle');
         if (!textEl.getAttribute('font-size')) textEl.setAttribute('font-size', '42');
         textEl.setAttribute('fill', '字');
+        textEl.setAttribute('font-weight', 'bold');  // 阅读格式默认加粗
         textEl.textContent = '数量';
         const serializer = new XMLSerializer();
         input.value = serializer.serializeToString(svg);
@@ -836,7 +843,8 @@
     convertReadingBtn.addEventListener('click', convertToReadingFormat);
     $('closeBubbleBtn').addEventListener('click', closeBubbleSection);
     applyBubbleBtn.addEventListener('click', updateBubblePreview);
-    [textX, textY, textSize, textFill, textContent, textFont, strokeWidth].forEach(el => { el.addEventListener(
+    // 增加 textWeight 的监听
+    [textX, textY, textSize, textFill, textContent, textFont, textWeight, strokeWidth].forEach(el => { el.addEventListener(
             'input', updateBubblePreview); });
 
     $('extractBtn').addEventListener('click', handleExtract);
