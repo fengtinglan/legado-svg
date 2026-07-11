@@ -52,7 +52,7 @@
     const helpModalClose = $('helpModalClose');
     const helpBtn = $('helpBtn');
 
-    // 🆕 导出弹窗相关元素
+    // 导出弹窗相关元素
     const exportModalOverlay = $('exportModalOverlay');
     const exportModalClose = $('exportModalClose');
     const exportCopyCodeBtn = $('exportCopyCodeBtn');
@@ -681,7 +681,7 @@
     function closeBubbleSection() { bubbleSection.classList.add('hidden');
         bubbleCodeOutput.classList.remove('show'); }
 
-    // 🆕 生成应用了用户参数的气泡SVG代码
+    // 生成应用了用户参数的气泡SVG代码
     function generateBubbleSvg() {
         const code = input.value.trim();
         if (!code || !/<svg\b/i.test(code)) return null;
@@ -706,7 +706,7 @@
         return serializer.serializeToString(doc.documentElement);
     }
 
-    // 🆕 打开导出弹窗
+    // 打开导出弹窗
     function openExportModal() {
         const code = input.value.trim();
         if (!code || !/<svg\b/i.test(code)) { showToast('没有可导出的 SVG 代码', 'error'); return; }
@@ -720,13 +720,13 @@
         exportModalOverlay.classList.add('active');
     }
 
-    // 🆕 关闭导出弹窗
+    // 关闭导出弹窗
     function closeExportModal() {
         exportModalOverlay.classList.remove('active');
         delete exportModalOverlay._svgCode;
     }
 
-    // 🆕 复制代码到剪贴板
+    // 复制代码到剪贴板
     function exportCopyCode() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可复制的代码', 'error'); return; }
@@ -734,7 +734,7 @@
         closeExportModal();
     }
 
-    // 🆕 导出为TXT文件
+    // 导出为TXT文件
     function exportAsTxt() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可导出的代码', 'error'); return; }
@@ -743,7 +743,7 @@
         closeExportModal();
     }
 
-    // 🆕 导出为SVG文件
+    // 导出为SVG文件
     function exportAsSvg() {
         const svgCode = exportModalOverlay._svgCode || generateBubbleSvg();
         if (!svgCode) { showToast('没有可导出的代码', 'error'); return; }
@@ -752,7 +752,7 @@
         closeExportModal();
     }
 
-    // 🆕 触发文件下载
+    // 触发文件下载
     function triggerDownload(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
@@ -768,7 +768,7 @@
         }, 300);
     }
 
-    // 🆕 导出弹窗事件绑定
+    // 导出弹窗事件绑定
     exportBubbleBtn.addEventListener('click', openExportModal);
     exportModalClose.addEventListener('click', closeExportModal);
     exportModalOverlay.addEventListener('click', e => {
