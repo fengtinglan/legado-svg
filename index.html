@@ -99,6 +99,39 @@
         </div>
     </div>
 
+    <!-- 🆕 导出气泡格式弹窗 -->
+    <div class="export-modal-overlay" id="exportModalOverlay">
+        <div class="export-modal" id="exportModal">
+            <div class="export-modal-header">
+                <h3>📦 导出气泡格式</h3>
+                <button class="export-modal-close" id="exportModalClose">&times;</button>
+            </div>
+            <div class="export-modal-body">
+                <button class="export-option-btn" id="exportCopyCodeBtn">
+                    <span class="option-icon">📋</span>
+                    <span class="option-info">
+                        <span class="option-title">复制代码</span>
+                        <span class="option-desc">将SVG代码复制到剪贴板</span>
+                    </span>
+                </button>
+                <button class="export-option-btn" id="exportTxtBtn">
+                    <span class="option-icon">📄</span>
+                    <span class="option-info">
+                        <span class="option-title">导出 TXT 文件</span>
+                        <span class="option-desc">下载为 .txt 文本文件</span>
+                    </span>
+                </button>
+                <button class="export-option-btn" id="exportSvgBtn">
+                    <span class="option-icon">🎨</span>
+                    <span class="option-info">
+                        <span class="option-title">导出 SVG 文件</span>
+                        <span class="option-desc">下载为 .svg 矢量图文件</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 主容器 -->
     <div class="container">
         <h1>
@@ -149,7 +182,6 @@
                     <button id="toolToggleBtn" class="secondary tool-toggle-btn">
                         🔧 工具 <span class="arrow">▾</span>
                     </button>
-                    <!-- 图片转SVG 行 -->
                     <div class="sub-row" id="subRow">
                         <button id="toSvgBtn" class="secondary">🔄 图片转 SVG</button>
                         <button id="customLinkBtn" class="secondary">🔗 自定义链接</button>
@@ -157,7 +189,6 @@
                     <div class="link-row" id="linkRow">
                         <span class="link-status" id="linkStatus" title="当前图片转SVG链接">to-svg.com</span>
                     </div>
-                    <!-- 🆕 SVG压缩 行 -->
                     <div class="sub-row compress-sub-row" id="compressSubRow">
                         <button id="compressBtn" class="secondary">🗜️ SVG 压缩</button>
                         <button id="compressCustomLinkBtn" class="secondary">🔗 自定义链接</button>
