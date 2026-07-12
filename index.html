@@ -58,6 +58,8 @@
                     <p>• <strong>填充颜色</strong>：气泡底色，支持十六进制颜色或变量（如 <span class="help-shortcut">$tccolor</span>）。</p>
                     <p>• <strong>文本内容</strong>：预览时显示的文字，导出时晴天格式会替换为 <span class="help-shortcut">$displayText</span>，其他格式保留实际值。</p>
                     <p>• <strong>画布背景</strong>：整体背景色，可填颜色值或 <span class="help-shortcut">transparent</span>。</p>
+                    <p>• <strong>描边旋转</strong>：数值（-360 ~ 360），整个气泡的旋转角度，以度为单位的数字。</p>
+                    <p>• <strong>文字旋转</strong>：数值（-360 ~ 360），文字绕其自身中心旋转的角度。</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -93,7 +95,7 @@
         </div>
     </div>
 
-    <!-- 更新日志弹窗（时间已去除） -->
+    <!-- 更新日志弹窗 -->
     <div class="help-modal-overlay" id="changelogModalOverlay">
         <div class="help-modal" id="changelogModal">
             <div class="help-modal-header">
@@ -113,6 +115,7 @@
                     <p>• 默认 SVG 更换为简洁气泡图标</p>
                     <p>• 界面新增更新日志按钮及更新时间显示</p>
                     <p>• 修复使用说明按钮点击后蓝色方块残留</p>
+                    <p>• 新增描边旋转和文字旋转控件，支持动态预览</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -219,25 +222,20 @@
         </div>
 
         <div class="actions">
-            <!-- 第一行：提取所有颜色 -->
             <div class="actions-row extract-row">
                 <button id="extractBtn" class="primary">🔍 提取所有颜色</button>
             </div>
-            <!-- 第二行：清空、复制代码 -->
             <div class="actions-row">
                 <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
                 <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
             </div>
-            <!-- 第三行：预览SVG（占一整行） -->
             <div class="actions-row">
                 <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
             </div>
-            <!-- 第四行：转为晴天格式、转为晋江格式 -->
             <div class="actions-row">
                 <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
                 <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
             </div>
-            <!-- 第五行：工具（占整行） -->
             <div class="actions-row tool-full-row">
                 <div class="btn-group tool-btn-group" id="toolGroup">
                     <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
@@ -303,6 +301,8 @@
                     <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
                     <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
                     <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
+                    <div class="control-row"><label>描边旋转</label><input type="number" id="rotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
+                    <div class="control-row"><label>文字旋转</label><input type="number" id="textRotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
                     <!-- 晴天专用控件 -->
                     <div class="control-row sunny-only" style="display:none;"><label>描边透明度</label><input type="number" id="strokeOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
                     <div class="control-row sunny-only" style="display:none;">

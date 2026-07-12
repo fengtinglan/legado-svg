@@ -68,6 +68,9 @@
     const fillColorPicker = $('fillColorPicker');
     const sunnyControls = document.querySelectorAll('.sunny-only');
 
+    const rotateAngleInput = $('rotateAngle');
+    const textRotateAngleInput = $('textRotateAngle');
+
     const exportModalOverlay = $('exportModalOverlay');
     const exportModalClose = $('exportModalClose');
     const exportCopyCodeBtn = $('exportCopyCodeBtn');
@@ -324,14 +327,20 @@
 
     function setSunnyControlsVisibility(visible) { sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; }); }
 
+    // 核心：预览更新，处理旋转和文字旋转
     function updateBubblePreview() {
         const code = currentPreviewCode;
         if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; }
         const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml');
         if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>'; return; }
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
-        const paths = previewDoc.querySelectorAll('path'); const firstPath = paths[0];
-        if (firstPath) {
+        const svgEl = previewDoc.documentElement;
+
+        // 处理所有路径的旋转（描边旋转）
+        const paths = previewDoc.querySelectorAll('path');
+        const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
+        if (paths.length > 0) {
+            const firstPath = paths[0];
             firstPath.setAttribute('stroke-width', strokeWidth.value);
             if (isSunnyMode) {
                 firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value);
@@ -339,18 +348,50 @@
                 firstPath.setAttribute('fill', fillColorInput.value || '#ffffff');
                 firstPath.setAttribute('stroke', '#000000');
             }
+            // 应用描边旋转（绕 viewBox 中心）
+            if (rotateAngle !== 0) {
+                const vb = svgEl.getAttribute('viewBox') || '0 0 1153 1024';
+                const vbParts = vb.trim().split(/\s+/);
+                const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2;
+                const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+                const existingTransform = firstPath.getAttribute('transform') || '';
+                const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`;
+                firstPath.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            } else {
+                const existingTransform = firstPath.getAttribute('transform') || '';
+                const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim();
+                if (cleanedTransform) firstPath.setAttribute('transform', cleanedTransform);
+                else firstPath.removeAttribute('transform');
+            }
         }
+
+        // 处理文字
         const textEl = previewDoc.querySelector('text');
+        const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
         if (textEl) {
-            textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value); textEl.setAttribute('font-size', textSize.value);
-            textEl.setAttribute('font-family', textFont.value); textEl.setAttribute('font-weight', textWeight.value);
+            textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value);
+            textEl.setAttribute('font-size', textSize.value); textEl.setAttribute('font-family', textFont.value);
+            textEl.setAttribute('font-weight', textWeight.value);
             if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); }
             let useColor = textFill.value.trim();
             if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(useColor) && !/^rgb/i.test(useColor) && !/^hsl/i.test(useColor) && useColor !== 'transparent') { useColor = '#000000'; }
             textEl.setAttribute('fill', useColor); textEl.setAttribute('style', `fill: ${useColor}; opacity: 1;`);
             textEl.textContent = textContent.value || '927';
+
+            // 文字旋转（绕文字自身中心）
+            if (textRotateAngle !== 0) {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
+                textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            } else {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim();
+                if (cleanedTransform) textEl.setAttribute('transform', cleanedTransform);
+                else textEl.removeAttribute('transform');
+            }
         }
-        const serializer = new XMLSerializer(); bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
+        const serializer = new XMLSerializer();
+        bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
     }
 
     function openBubbleSection() {
@@ -384,6 +425,8 @@
             fillColorInput.value = fillVal; fillOpacityInput.value = firstPath.getAttribute('fill-opacity') || '1';
             syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
         }
+        rotateAngleInput.value = 0;
+        textRotateAngleInput.value = 0;
         bgColor.value = 'transparent';
         setSunnyControlsVisibility(isSunnyMode);
         bubbleSection.classList.remove('hidden'); updateBubblePreview();
@@ -406,6 +449,13 @@
             const style = textEl.getAttribute('style');
             if (style) { textEl.setAttribute('style', fillVal.startsWith('$') ? style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;') : style.replace(/fill:\s*[^;]+;?/g, `fill: ${textFill.value};`)); }
             if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); }
+            // 导出文字旋转
+            const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
+            if (textRotateAngle !== 0) {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
+                textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            }
         }
         const paths = doc.querySelectorAll('path');
         if (paths.length > 0) {
@@ -415,6 +465,16 @@
                 firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value); firstPath.setAttribute('fill-opacity', fillOpacityInput.value);
                 const style = firstPath.getAttribute('style');
                 if (style) firstPath.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;'));
+            }
+            const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
+            if (rotateAngle !== 0) {
+                const vb = doc.documentElement.getAttribute('viewBox') || '0 0 1153 1024';
+                const vbParts = vb.trim().split(/\s+/);
+                const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2;
+                const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+                const existingTransform = firstPath.getAttribute('transform') || '';
+                const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`;
+                firstPath.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
             }
         }
         const serializer = new XMLSerializer(); return serializer.serializeToString(doc.documentElement);
@@ -514,7 +574,7 @@
     sunnyFormatBtn.addEventListener('click', handleSunnyFormat);
     $('closeBubbleBtn').addEventListener('click', closeBubbleSection);
     applyBubbleBtn.addEventListener('click', updateBubblePreview);
-    [textX, textY, textSize, textFill, textContent, textFont, textWeight, strokeWidth].forEach(el => { el.addEventListener('input', updateBubblePreview); });
+    [textX, textY, textSize, textFill, textContent, textFont, textWeight, strokeWidth, rotateAngleInput, textRotateAngleInput].forEach(el => { el.addEventListener('input', updateBubblePreview); });
     strokeOpacityInput.addEventListener('input', updateBubblePreview);
     fillColorInput.addEventListener('input', updateBubblePreview);
     fillOpacityInput.addEventListener('input', updateBubblePreview);
