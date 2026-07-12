@@ -1,4 +1,4 @@
-// ========== JS 部分（最终完整版，含关闭按钮修复） ==========
+// ========== JS 部分（默认固定 + 手动可解除） ==========
 (() => {
     const STORAGE_KEY = 'customSvgUrl';
     const DEFAULT_URL = 'https://to-svg.com/zh';
@@ -329,7 +329,6 @@
 
     function setSunnyControlsVisibility(visible) { sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; }); }
 
-    // ===== 核心修复：updateBubblePreview 保留关闭按钮 =====
     function updateBubblePreview() {
         const code = currentPreviewCode;
         if (!code || !/<svg\b/i.test(code)) {
@@ -397,15 +396,11 @@
         }
 
         const serializer = new XMLSerializer();
-        // 保存已有的关闭按钮
         const existingCloseBtn = bubblePreviewBox.querySelector('#closePinBtn');
-        // 更新 SVG 内容
         bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
-        // 重新添加关闭按钮（如果之前存在）
         if (existingCloseBtn) {
             bubblePreviewBox.appendChild(existingCloseBtn);
         } else {
-            // 如果从未创建过，则创建一个
             const btn = document.createElement('button');
             btn.id = 'closePinBtn';
             btn.className = 'close-pin-btn';
@@ -413,7 +408,6 @@
             btn.textContent = '✕';
             bubblePreviewBox.appendChild(btn);
         }
-        // 根据当前固定状态设置按钮可见性
         const btn = bubblePreviewBox.querySelector('#closePinBtn');
         if (btn) {
             btn.style.display = isPreviewPinned ? 'flex' : 'none';
@@ -455,14 +449,15 @@
         textRotateAngleInput.value = 0;
         bgColor.value = 'transparent';
         setSunnyControlsVisibility(isSunnyMode);
-        bubbleSection.classList.remove('hidden'); updateBubblePreview();
-        setupAutoPin();
+        bubbleSection.classList.remove('hidden');
+        updateBubblePreview();
+        // 默认固定预览图
+        applyPin();
     }
 
     function closeBubbleSection() {
         bubbleSection.classList.add('hidden');
         bubbleCodeOutput.classList.remove('show');
-        if (autoPinObserver) { autoPinObserver.disconnect(); autoPinObserver = null; }
     }
 
     function generateBubbleSvg() {
@@ -596,7 +591,8 @@
             syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
         }
         setSunnyControlsVisibility(true); bubbleSection.classList.remove('hidden'); updateBubblePreview();
-        setupAutoPin();
+        // 默认固定
+        applyPin();
         showToast('☀️ 已转为晴天格式（颜色已替换为变量）', 'success');
     }
 
@@ -610,7 +606,7 @@
     fillColorInput.addEventListener('input', updateBubblePreview);
     fillOpacityInput.addEventListener('input', updateBubblePreview);
 
-    // ===== 固定预览按钮逻辑 =====
+    // ===== 固定预览按钮逻辑（默认固定） =====
     const pinPreviewBtn = $('pinPreviewBtn');
     let isPreviewPinned = false;
     let savedBoxStyle = {};
@@ -691,7 +687,6 @@
         }
     });
 
-    // 使用事件委托监听关闭按钮（因为按钮可能被动态重建）
     bubblePreviewBox.addEventListener('click', (e) => {
         if (e.target.id === 'closePinBtn') {
             e.stopPropagation();
@@ -700,28 +695,6 @@
             }
         }
     });
-
-    // ===== 自动固定 =====
-    let autoPinObserver = null;
-    function setupAutoPin() {
-        if (!window.IntersectionObserver || !bubbleTitle) return;
-        if (autoPinObserver) autoPinObserver.disconnect();
-        autoPinObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (!bubbleSection.classList.contains('hidden') && !isPreviewPinned && entry.intersectionRatio === 0) {
-                    applyPin();
-                }
-            });
-        }, { threshold: 0 });
-        autoPinObserver.observe(bubbleTitle);
-    }
-
-    const originalCloseBubbleSection = closeBubbleSection;
-    closeBubbleSection = function() {
-        if (isPreviewPinned) restorePreviewPosition();
-        if (autoPinObserver) { autoPinObserver.disconnect(); autoPinObserver = null; }
-        originalCloseBubbleSection();
-    };
 
     // ===== 其他事件绑定 =====
     $('extractBtn').addEventListener('click', handleExtract);
