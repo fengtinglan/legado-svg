@@ -57,6 +57,10 @@
     const helpModalClose = $('helpModalClose');
     const helpBtn = $('helpBtn');
 
+    const changelogModalOverlay = $('changelogModalOverlay');
+    const changelogModalClose = $('changelogModalClose');
+    const changelogBtn = $('changelogBtn');
+
     const strokeOpacityInput = $('strokeOpacity');
     const fillColorInput = $('fillColorInput');
     const fillOpacityInput = $('fillOpacity');
@@ -233,9 +237,7 @@
     uploadTabBtn.addEventListener('click', () => setInputMode('upload'));
     imageTabBtn.addEventListener('click', () => setInputMode('image'));
 
-    function getFileExtension(filename) {
-        const lastDot = filename.lastIndexOf('.'); return lastDot === -1 ? '' : filename.substring(lastDot + 1).toLowerCase();
-    }
+    function getFileExtension(filename) { const lastDot = filename.lastIndexOf('.'); return lastDot === -1 ? '' : filename.substring(lastDot + 1).toLowerCase(); }
     function isTextFile(filename) { const ext = getFileExtension(filename); return !ext || TEXT_EXTENSIONS.has(ext); }
     function isImageFile(filename) { const ext = getFileExtension(filename); return new Set(['png','jpg','jpeg','gif','bmp','webp','ico','tiff','heic']).has(ext); }
     function readFileAndPopulate(file) {
@@ -569,6 +571,7 @@
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
+            if (changelogModalOverlay.classList.contains('active')) { changelogModalOverlay.classList.remove('active'); }
             if (exportModalOverlay.classList.contains('active')) { closeExportModal(); }
             if (helpModalOverlay.classList.contains('active')) { helpModalOverlay.classList.remove('active'); }
             if ($('svgModal').classList.contains('active')) closeModal();
@@ -583,6 +586,10 @@
     helpBtn.addEventListener('click', () => { helpModalOverlay.classList.add('active'); });
     helpModalClose.addEventListener('click', () => { helpModalOverlay.classList.remove('active'); });
     helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active'); });
+
+    changelogBtn.addEventListener('click', () => { changelogModalOverlay.classList.add('active'); });
+    changelogModalClose.addEventListener('click', () => { changelogModalOverlay.classList.remove('active'); });
+    changelogModalOverlay.addEventListener('click', e => { if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active'); });
 
     // 颜色预览同步
     function syncColorPreview(inputEl, previewEl, pickerEl) {

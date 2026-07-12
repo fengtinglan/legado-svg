@@ -93,6 +93,40 @@
         </div>
     </div>
 
+    <!-- 更新日志弹窗（时间已去除） -->
+    <div class="help-modal-overlay" id="changelogModalOverlay">
+        <div class="help-modal" id="changelogModal">
+            <div class="help-modal-header">
+                <h2>📋 更新日志</h2>
+                <button class="help-modal-close" id="changelogModalClose">&times;</button>
+            </div>
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3>2026-07-12</h3>
+                    <p>• 新增颜色预览和取色器，支持快速选色</p>
+                    <p>• 气泡预览输入栏统一宽度，预览图 sticky 定位</p>
+                    <p>• 新增“转为晴天格式”，自动替换颜色变量并居中文字</p>
+                    <p>• “转为阅读格式”更名为“转为晋江格式”</p>
+                    <p>• 格式转换不再覆盖输入框，避免误操作</p>
+                    <p>• 字体粗细控件在晴天模式下可见，透明度输入栏添加提示</p>
+                    <p>• 使用说明更新，补充字体粗细等参数要求</p>
+                    <p>• 默认 SVG 更换为简洁气泡图标</p>
+                    <p>• 界面新增更新日志按钮及更新时间显示</p>
+                    <p>• 修复使用说明按钮点击后蓝色方块残留</p>
+                </div>
+                <hr class="help-divider">
+                <div class="help-section">
+                    <h3>2026-07-11</h3>
+                    <p>• 项目初始化，实现核心功能：代码输入、文件上传、颜色提取与替换</p>
+                    <p>• 气泡预览与导出（复制代码、TXT、SVG）</p>
+                    <p>• 工具区（图片转SVG、SVG压缩）</p>
+                    <p>• 抽屉弹窗拖拽优化及关闭动画</p>
+                    <p>• 按钮布局调整为清晰行列结构</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- SVG预览弹窗 -->
     <div class="modal-overlay fullscreen" id="svgModal">
         <div class="modal-content">
@@ -155,8 +189,9 @@
     <div class="container">
         <h1>
             🎨 legado-svg
-            <small>气泡颜色工具</small>
+            <span class="update-time">更新于 2026-07-12</span>
             <button class="help-btn" id="helpBtn">📖 使用说明</button>
+            <button class="help-btn" id="changelogBtn">📋 更新日志</button>
         </h1>
 
         <div class="input-tabs" id="inputTabs">
@@ -184,20 +219,25 @@
         </div>
 
         <div class="actions">
+            <!-- 第一行：提取所有颜色 -->
             <div class="actions-row extract-row">
                 <button id="extractBtn" class="primary">🔍 提取所有颜色</button>
             </div>
+            <!-- 第二行：清空、复制代码 -->
             <div class="actions-row">
                 <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
                 <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
             </div>
+            <!-- 第三行：预览SVG（占一整行） -->
             <div class="actions-row">
                 <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
             </div>
+            <!-- 第四行：转为晴天格式、转为晋江格式 -->
             <div class="actions-row">
                 <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
                 <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
             </div>
+            <!-- 第五行：工具（占整行） -->
             <div class="actions-row tool-full-row">
                 <div class="btn-group tool-btn-group" id="toolGroup">
                     <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
@@ -263,6 +303,7 @@
                     <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
                     <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
                     <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
+                    <!-- 晴天专用控件 -->
                     <div class="control-row sunny-only" style="display:none;"><label>描边透明度</label><input type="number" id="strokeOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
                     <div class="control-row sunny-only" style="display:none;">
                         <label>填充颜色</label>
