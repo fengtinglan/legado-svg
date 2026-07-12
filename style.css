@@ -163,7 +163,7 @@ textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !imp
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;   /* 改为 visible，让关闭按钮可超出边界显示 */
     flex-shrink: 0;
     position: sticky;
     top: 10px;
@@ -180,8 +180,6 @@ textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !imp
 .bubble-actions button:hover { transform: scale(1.02); }
 .btn-export { background: #0f172a; color: white; }
 .btn-export:hover { background: #1e293b; }
-
-/* 应用按钮：保持蓝色背景白色文字，增加边框，圆角加大 */
 .btn-apply {
     background: #3b82f6;
     color: white;
@@ -192,7 +190,6 @@ textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !imp
     background: #2563eb;
     border-color: #1d4ed8;
 }
-
 .bubble-code-output { margin-top: 12px; background: #f1f5f9; border-radius: 12px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.8rem; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; color: #0f172a; display: none; }
 .bubble-code-output.show { display: block; }
 #toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 360px; pointer-events: none; }
@@ -277,6 +274,31 @@ textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !imp
 
 /* 固定按钮悬停效果 */
 #pinPreviewBtn:hover { background: #e2e8f0; border-color: #94a3b8; color: #0f172a; }
+
+/* 预览图固定时的关闭按钮 */
+.close-pin-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    display: none;           /* 默认隐藏，JS 控制显示 */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 110;
+    line-height: 1;
+    transition: background 0.2s;
+}
+.close-pin-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
 
 @media (max-width: 740px) {
     .input-tabs { width:100%; border-radius:12px; padding:4px; }

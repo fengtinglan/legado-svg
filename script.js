@@ -1,4 +1,4 @@
-// ========== JS 部分（完整版：自动固定 + 键盘弹出平滑过渡） ==========
+// ========== JS 部分（最终完整版，含关闭按钮修复） ==========
 (() => {
     const STORAGE_KEY = 'customSvgUrl';
     const DEFAULT_URL = 'https://to-svg.com/zh';
@@ -38,7 +38,7 @@
     const bubbleSection = $('bubbleSection'),
         bubblePreviewBox = $('bubblePreviewBox');
     const bubbleTitle = $('bubbleTitle');
-    const bubbleTitleText = $('bubbleTitleText');   // 必须存在
+    const bubbleTitleText = $('bubbleTitleText');
     const textX = $('textX'),
         textY = $('textY'),
         textSize = $('textSize');
@@ -329,11 +329,19 @@
 
     function setSunnyControlsVisibility(visible) { sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; }); }
 
+    // ===== 核心修复：updateBubblePreview 保留关闭按钮 =====
     function updateBubblePreview() {
         const code = currentPreviewCode;
-        if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; }
-        const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml');
-        if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>'; return; }
+        if (!code || !/<svg\b/i.test(code)) {
+            bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>';
+            return;
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) {
+            bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>';
+            return;
+        }
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
         const svgEl = previewDoc.documentElement;
 
@@ -387,8 +395,29 @@
                 else textEl.removeAttribute('transform');
             }
         }
+
         const serializer = new XMLSerializer();
+        // 保存已有的关闭按钮
+        const existingCloseBtn = bubblePreviewBox.querySelector('#closePinBtn');
+        // 更新 SVG 内容
         bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
+        // 重新添加关闭按钮（如果之前存在）
+        if (existingCloseBtn) {
+            bubblePreviewBox.appendChild(existingCloseBtn);
+        } else {
+            // 如果从未创建过，则创建一个
+            const btn = document.createElement('button');
+            btn.id = 'closePinBtn';
+            btn.className = 'close-pin-btn';
+            btn.title = '解除固定';
+            btn.textContent = '✕';
+            bubblePreviewBox.appendChild(btn);
+        }
+        // 根据当前固定状态设置按钮可见性
+        const btn = bubblePreviewBox.querySelector('#closePinBtn');
+        if (btn) {
+            btn.style.display = isPreviewPinned ? 'flex' : 'none';
+        }
     }
 
     function openBubbleSection() {
@@ -581,7 +610,7 @@
     fillColorInput.addEventListener('input', updateBubblePreview);
     fillOpacityInput.addEventListener('input', updateBubblePreview);
 
-    // ===== 固定预览按钮逻辑（含平滑过渡） =====
+    // ===== 固定预览按钮逻辑 =====
     const pinPreviewBtn = $('pinPreviewBtn');
     let isPreviewPinned = false;
     let savedBoxStyle = {};
@@ -613,58 +642,74 @@
         bubblePreviewBox.style.boxShadow = '';
         pinPreviewBtn.textContent = '📌 固定';
         isPreviewPinned = false;
+        const btn = document.querySelector('#closePinBtn');
+        if (btn) btn.style.display = 'none';
+    }
+
+    function applyPin() {
+        if (isPreviewPinned) return;
+        savedBoxStyle.position = bubblePreviewBox.style.position;
+        savedBoxStyle.top = bubblePreviewBox.style.top;
+        savedBoxStyle.left = bubblePreviewBox.style.left;
+        savedBoxStyle.right = bubblePreviewBox.style.right;
+        savedBoxStyle.zIndex = bubblePreviewBox.style.zIndex;
+        savedBoxStyle.transition = bubblePreviewBox.style.transition;
+
+        bubblePreviewBox.style.transition = 'none';
+        bubblePreviewBox.style.position = 'fixed';
+        bubblePreviewBox.style.left = 'auto';
+        bubblePreviewBox.style.right = '20px';
+        bubblePreviewBox.style.zIndex = '100';
+        bubblePreviewBox.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
+
+        if (window.visualViewport) {
+            updateFixedPosition();
+        } else {
+            bubblePreviewBox.style.top = '60px';
+        }
+
+        requestAnimationFrame(() => {
+            bubblePreviewBox.style.transition = 'top 0.3s ease, right 0.3s ease';
+        });
+
+        if (window.visualViewport) {
+            visualViewportHandler = () => updateFixedPosition();
+            window.visualViewport.addEventListener('resize', visualViewportHandler);
+            window.visualViewport.addEventListener('scroll', visualViewportHandler);
+        }
+        pinPreviewBtn.textContent = '🔓 解除固定';
+        isPreviewPinned = true;
+        const btn = document.querySelector('#closePinBtn');
+        if (btn) btn.style.display = 'flex';
     }
 
     pinPreviewBtn.addEventListener('click', () => {
         if (!isPreviewPinned) {
-            savedBoxStyle.position = bubblePreviewBox.style.position;
-            savedBoxStyle.top = bubblePreviewBox.style.top;
-            savedBoxStyle.left = bubblePreviewBox.style.left;
-            savedBoxStyle.right = bubblePreviewBox.style.right;
-            savedBoxStyle.zIndex = bubblePreviewBox.style.zIndex;
-            savedBoxStyle.transition = bubblePreviewBox.style.transition;
-
-            // 初始瞬间到位，避免从旧位置滑动
-            bubblePreviewBox.style.transition = 'none';
-            bubblePreviewBox.style.position = 'fixed';
-            bubblePreviewBox.style.left = 'auto';
-            bubblePreviewBox.style.right = '20px';
-            bubblePreviewBox.style.zIndex = '100';
-            bubblePreviewBox.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
-
-            if (window.visualViewport) {
-                updateFixedPosition(); // 立即设置 top
-            } else {
-                bubblePreviewBox.style.top = '60px';
-            }
-
-            // 下一帧启用过渡，让后续键盘弹出时平滑移动
-            requestAnimationFrame(() => {
-                bubblePreviewBox.style.transition = 'top 0.3s ease, right 0.3s ease';
-            });
-
-            if (window.visualViewport) {
-                visualViewportHandler = () => updateFixedPosition();
-                window.visualViewport.addEventListener('resize', visualViewportHandler);
-                window.visualViewport.addEventListener('scroll', visualViewportHandler);
-            }
-            pinPreviewBtn.textContent = '🔓 解除固定';
-            isPreviewPinned = true;
+            applyPin();
         } else {
             restorePreviewPosition();
         }
     });
 
-    // ===== 自动固定：当标题完全被遮挡时自动开启固定 =====
-    let autoPinObserver = null;
+    // 使用事件委托监听关闭按钮（因为按钮可能被动态重建）
+    bubblePreviewBox.addEventListener('click', (e) => {
+        if (e.target.id === 'closePinBtn') {
+            e.stopPropagation();
+            if (isPreviewPinned) {
+                restorePreviewPosition();
+            }
+        }
+    });
 
+    // ===== 自动固定 =====
+    let autoPinObserver = null;
     function setupAutoPin() {
         if (!window.IntersectionObserver || !bubbleTitle) return;
         if (autoPinObserver) autoPinObserver.disconnect();
         autoPinObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (!bubbleSection.classList.contains('hidden') && !isPreviewPinned && entry.intersectionRatio === 0) {
-                    if (pinPreviewBtn) pinPreviewBtn.click();
+                    applyPin();
                 }
             });
         }, { threshold: 0 });
@@ -673,13 +718,8 @@
 
     const originalCloseBubbleSection = closeBubbleSection;
     closeBubbleSection = function() {
-        if (isPreviewPinned) {
-            restorePreviewPosition();
-        }
-        if (autoPinObserver) {
-            autoPinObserver.disconnect();
-            autoPinObserver = null;
-        }
+        if (isPreviewPinned) restorePreviewPosition();
+        if (autoPinObserver) { autoPinObserver.disconnect(); autoPinObserver = null; }
         originalCloseBubbleSection();
     };
 

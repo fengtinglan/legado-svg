@@ -117,6 +117,7 @@
                     <p>• 修复使用说明按钮点击后蓝色方块残留</p>
                     <p>• 新增描边旋转和文字旋转控件，支持动态预览</p>
                     <p>• 新增“📌 固定”按钮，解决键盘弹出时预览图跟随滚动问题</p>
+                    <p>• 预览图固定后右上角显示关闭按钮，点击即可解除固定</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -232,7 +233,7 @@
                 <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
                 <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
             </div>
-            <!-- 第三行：预览SVG（占一整行） -->
+            <!-- 第三行：预览SVG -->
             <div class="actions-row">
                 <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
             </div>
@@ -300,7 +301,11 @@
                 <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <div class="bubble-preview-container">
-                <div class="preview-box" id="bubblePreviewBox"></div>
+                <!-- 预览图容器，overflow:visible 确保关闭按钮可见 -->
+                <div class="preview-box" id="bubblePreviewBox" style="overflow: visible;">
+                    <!-- 固定时出现的关闭按钮 -->
+                    <button id="closePinBtn" class="close-pin-btn" title="解除固定">✕</button>
+                </div>
                 <div class="bubble-controls" id="bubbleControls">
                     <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
                     <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1" style="width:160px;"></div>
