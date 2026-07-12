@@ -1,4 +1,3 @@
-/* ========== CSS 部分 ========== */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -60,106 +59,23 @@ h1 {
     order: 2;
     margin-left: 0;
 }
-.help-btn:last-of-type {
-    margin-left: 8px;
-}
-.help-btn:hover {
-    background: #f1f5f9;
-    border-color: #3b82f6;
-    color: #3b82f6;
-}
+.help-btn:last-of-type { margin-left: 8px; }
+.help-btn:hover { background: #f1f5f9; border-color: #3b82f6; color: #3b82f6; }
 button:focus,
 button:focus-visible,
-button:active {
-    outline: none !important;
-    box-shadow: none !important;
-}
-.input-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    background: #f1f5f9;
-    border-radius: 14px;
-    padding: 5px;
-    width: fit-content;
-    flex-wrap: wrap;
-}
-.input-tab {
-    padding: 10px 22px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    background: transparent;
-    color: #64748b;
-    transition: all 0.25s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-.input-tab.active {
-    background: white;
-    color: #0f172a;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-.input-tab:hover:not(.active) {
-    color: #475569;
-    background: rgba(255, 255, 255, 0.5);
-}
-textarea {
-    width: 100%;
-    height: 160px;
-    padding: 14px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    resize: vertical;
-    background: #fafcff;
-    transition: border-color 0.2s, opacity 0.25s;
-    margin-top: 10px;
-}
-textarea:focus {
-    border-color: #3b82f6;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
+button:active { outline: none !important; box-shadow: none !important; }
+.input-tabs { display: flex; gap: 0; margin-bottom: 0; background: #f1f5f9; border-radius: 14px; padding: 5px; width: fit-content; flex-wrap: wrap; }
+.input-tab { padding: 10px 22px; font-size: 0.9rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; background: transparent; color: #64748b; transition: all 0.25s; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
+.input-tab.active { background: white; color: #0f172a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.input-tab:hover:not(.active) { color: #475569; background: rgba(255, 255, 255, 0.5); }
+textarea { width: 100%; height: 160px; padding: 14px; font-family: 'Courier New', monospace; font-size: 13px; border: 2px solid #e2e8f0; border-radius: 12px; resize: vertical; background: #fafcff; transition: border-color 0.2s, opacity 0.25s; margin-top: 10px; }
+textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 textarea.hidden { display: none; }
-textarea.drag-over {
-    border-color: #3b82f6 !important;
-    border-style: dashed !important;
-    background: #eff6ff !important;
-}
-.upload-zone {
-    width: 100%;
-    min-height: 160px;
-    border: 2px dashed #cbd5e1;
-    border-radius: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    cursor: pointer;
-    background: #fafcff;
-    transition: all 0.25s;
-    padding: 30px 20px;
-    margin-top: 10px;
-    text-align: center;
-    user-select: none;
-    position: relative;
-    overflow: hidden;
-}
+textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !important; background: #eff6ff !important; }
+.upload-zone { width: 100%; min-height: 160px; border: 2px dashed #cbd5e1; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; background: #fafcff; transition: all 0.25s; padding: 30px 20px; margin-top: 10px; text-align: center; user-select: none; position: relative; overflow: hidden; }
 .upload-zone.hidden { display: none; }
 .upload-zone:hover { border-color: #3b82f6; background: #f8faff; }
-.upload-zone.drag-over {
-    border-color: #3b82f6 !important;
-    border-style: solid !important;
-    background: #eff6ff !important;
-    transform: scale(1.01);
-}
+.upload-zone.drag-over { border-color: #3b82f6 !important; border-style: solid !important; background: #eff6ff !important; transform: scale(1.01); }
 .upload-zone .upload-icon { font-size: 3rem; pointer-events: none; transition: transform 0.3s; }
 .upload-zone.drag-over .upload-icon { transform: translateY(-6px); }
 .upload-zone .upload-label { font-weight: 600; color: #475569; font-size: 1rem; }
@@ -169,10 +85,7 @@ textarea.drag-over {
 .upload-zone.loading .upload-label,
 .upload-zone.loading .upload-hint { display: none; }
 .upload-zone.loading .upload-loading { display: block; animation: pulse 1.2s ease-in-out infinite; }
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .upload-zone input[type="file"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
 .actions { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 20px; }
 .actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -190,19 +103,7 @@ textarea.drag-over {
 .link-status { font-size: 0.75rem; color: #94a3b8; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
 .tool-toggle-btn .arrow { display: inline-block; transition: transform 0.3s ease; font-size: 0.7rem; margin-left: 2px; }
 .tool-toggle-btn.open .arrow { transform: rotate(180deg); }
-.actions button {
-    padding: 10px 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
-    text-align: center;
-    background: #e2e8f0;
-    color: #1e293b;
-}
+.actions button { padding: 10px 0; font-size: 0.95rem; font-weight: 600; border: none; border-radius: 30px; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; text-align: center; background: #e2e8f0; color: #1e293b; }
 .actions button:hover { transform: scale(1.02); }
 .actions button.primary { background: #3b82f6; color: white; }
 .actions button.primary:hover { background: #2563eb; }
@@ -241,9 +142,17 @@ textarea.drag-over {
 #bubbleSection.hidden { display: none; }
 .bubble-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .bubble-header h2 { font-size: 1.2rem; color: #0f172a; margin: 0; }
-.bubble-preview-container { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.bubble-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
 .preview-box {
-    width: 200px; height: 200px; border: 2px solid #e2e8f0; border-radius: 16px;
+    width: 200px;
+    height: 200px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
     background-color: #ffffff;
     background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
         linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
@@ -251,9 +160,14 @@ textarea.drag-over {
         linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; flex-shrink: 0;
-    position: sticky; top: 10px; z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: sticky;
+    top: 10px;
+    z-index: 5;
 }
 .preview-box svg { width: 100%; height: 100%; }
 .bubble-controls { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 12px; }
@@ -266,8 +180,19 @@ textarea.drag-over {
 .bubble-actions button:hover { transform: scale(1.02); }
 .btn-export { background: #0f172a; color: white; }
 .btn-export:hover { background: #1e293b; }
-.btn-apply { background: #3b82f6; color: white; }
-.btn-apply:hover { background: #2563eb; }
+
+/* 应用按钮：保持蓝色背景白色文字，增加边框，圆角加大 */
+.btn-apply {
+    background: #3b82f6;
+    color: white;
+    border: 1px solid #2563eb;
+    border-radius: 30px;
+}
+.btn-apply:hover {
+    background: #2563eb;
+    border-color: #1d4ed8;
+}
+
 .bubble-code-output { margin-top: 12px; background: #f1f5f9; border-radius: 12px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.8rem; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; color: #0f172a; display: none; }
 .bubble-code-output.show { display: block; }
 #toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 360px; pointer-events: none; }
@@ -349,6 +274,9 @@ textarea.drag-over {
 .tool-btn-group > button { width:100% !important; }
 .btn-group.stacked.tool-btn-group > button { width:100% !important; }
 .actions-row.tool-full-row .btn-group { flex:1; width:100%; }
+
+/* 固定按钮悬停效果 */
+#pinPreviewBtn:hover { background: #e2e8f0; border-color: #94a3b8; color: #0f172a; }
 
 @media (max-width: 740px) {
     .input-tabs { width:100%; border-radius:12px; padding:4px; }

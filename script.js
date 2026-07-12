@@ -1,4 +1,4 @@
-// ========== JS 部分 ==========
+// ========== JS 部分（完整版：自动固定 + 键盘弹出平滑过渡） ==========
 (() => {
     const STORAGE_KEY = 'customSvgUrl';
     const DEFAULT_URL = 'https://to-svg.com/zh';
@@ -38,6 +38,7 @@
     const bubbleSection = $('bubbleSection'),
         bubblePreviewBox = $('bubblePreviewBox');
     const bubbleTitle = $('bubbleTitle');
+    const bubbleTitleText = $('bubbleTitleText');   // 必须存在
     const textX = $('textX'),
         textY = $('textY'),
         textSize = $('textSize');
@@ -84,7 +85,7 @@
         'tsx', 'vue', 'svelte'
     ]);
 
-    // ====== 完整的工具函数 ======
+    // ====== 工具函数 ======
     function getCompressUrl() { return localStorage.getItem(COMPRESS_STORAGE_KEY) || DEFAULT_COMPRESS_URL; }
     function setCompressUrl(url) { localStorage.setItem(COMPRESS_STORAGE_KEY, url); updateCompressLinkStatus(); }
     function updateCompressLinkStatus() { const url = getCompressUrl(); const linkEl = $('compressLinkStatus'); try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } }
@@ -288,7 +289,8 @@
             const base64 = await loadImageAsBase64(file); const svgCode = await createImageBubble(base64);
             if (svgCode) {
                 input.value = svgCode; setInputMode('code'); imageUploadZone.classList.remove('loading'); imageFileInput.value = '';
-                handleExtract(); currentPreviewCode = svgCode; isSunnyMode = false; bubbleTitle.textContent = '🎈 气泡预览';
+                handleExtract(); currentPreviewCode = svgCode; isSunnyMode = false;
+                bubbleTitleText.textContent = '🎈 气泡预览';
                 openBubbleSection(); showToast('✅ 图片气泡已生成，可调整文本', 'success');
             } else { imageUploadZone.classList.remove('loading'); }
         } catch (err) { imageUploadZone.classList.remove('loading'); imageFileInput.value = ''; showToast('图片处理失败: ' + err.message, 'error'); }
@@ -327,7 +329,6 @@
 
     function setSunnyControlsVisibility(visible) { sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; }); }
 
-    // 核心：预览更新，处理旋转和文字旋转
     function updateBubblePreview() {
         const code = currentPreviewCode;
         if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; }
@@ -336,7 +337,6 @@
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
         const svgEl = previewDoc.documentElement;
 
-        // 处理所有路径的旋转（描边旋转）
         const paths = previewDoc.querySelectorAll('path');
         const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
         if (paths.length > 0) {
@@ -348,7 +348,6 @@
                 firstPath.setAttribute('fill', fillColorInput.value || '#ffffff');
                 firstPath.setAttribute('stroke', '#000000');
             }
-            // 应用描边旋转（绕 viewBox 中心）
             if (rotateAngle !== 0) {
                 const vb = svgEl.getAttribute('viewBox') || '0 0 1153 1024';
                 const vbParts = vb.trim().split(/\s+/);
@@ -365,7 +364,6 @@
             }
         }
 
-        // 处理文字
         const textEl = previewDoc.querySelector('text');
         const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
         if (textEl) {
@@ -378,7 +376,6 @@
             textEl.setAttribute('fill', useColor); textEl.setAttribute('style', `fill: ${useColor}; opacity: 1;`);
             textEl.textContent = textContent.value || '927';
 
-            // 文字旋转（绕文字自身中心）
             if (textRotateAngle !== 0) {
                 const existingTransform = textEl.getAttribute('transform') || '';
                 const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
@@ -430,9 +427,14 @@
         bgColor.value = 'transparent';
         setSunnyControlsVisibility(isSunnyMode);
         bubbleSection.classList.remove('hidden'); updateBubblePreview();
+        setupAutoPin();
     }
 
-    function closeBubbleSection() { bubbleSection.classList.add('hidden'); bubbleCodeOutput.classList.remove('show'); }
+    function closeBubbleSection() {
+        bubbleSection.classList.add('hidden');
+        bubbleCodeOutput.classList.remove('show');
+        if (autoPinObserver) { autoPinObserver.disconnect(); autoPinObserver = null; }
+    }
 
     function generateBubbleSvg() {
         const code = currentPreviewCode;
@@ -449,7 +451,6 @@
             const style = textEl.getAttribute('style');
             if (style) { textEl.setAttribute('style', fillVal.startsWith('$') ? style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;') : style.replace(/fill:\s*[^;]+;?/g, `fill: ${textFill.value};`)); }
             if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); }
-            // 导出文字旋转
             const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
             if (textRotateAngle !== 0) {
                 const existingTransform = textEl.getAttribute('transform') || '';
@@ -518,7 +519,7 @@
         if (!textEl.getAttribute('font-size')) textEl.setAttribute('font-size', '42');
         textEl.setAttribute('fill', '字'); textEl.setAttribute('font-weight', 'bold'); textEl.textContent = '数量';
         const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg);
-        bubbleTitle.textContent = '📐 晋江气泡预览';
+        bubbleTitleText.textContent = '📐 晋江气泡预览';
         openBubbleSection(); showToast('✅ 已转换为晋江格式，可微调后导出', 'success');
     }
 
@@ -555,7 +556,7 @@
             svg.appendChild(newText);
         }
         const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg);
-        bubbleTitle.textContent = '☀️ 晴天气泡预览';
+        bubbleTitleText.textContent = '☀️ 晴天气泡预览';
         textX.value = centerX; textY.value = centerY; textSize.value = origFontSize; textFill.value = origFill;
         textContent.value = '927'; textFont.value = origFontFamily; textWeight.value = origWeight;
         if (paths.length > 0) {
@@ -566,6 +567,7 @@
             syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
         }
         setSunnyControlsVisibility(true); bubbleSection.classList.remove('hidden'); updateBubblePreview();
+        setupAutoPin();
         showToast('☀️ 已转为晴天格式（颜色已替换为变量）', 'success');
     }
 
@@ -579,6 +581,109 @@
     fillColorInput.addEventListener('input', updateBubblePreview);
     fillOpacityInput.addEventListener('input', updateBubblePreview);
 
+    // ===== 固定预览按钮逻辑（含平滑过渡） =====
+    const pinPreviewBtn = $('pinPreviewBtn');
+    let isPreviewPinned = false;
+    let savedBoxStyle = {};
+    let visualViewportHandler = null;
+
+    function updateFixedPosition() {
+        if (!isPreviewPinned) return;
+        const vv = window.visualViewport;
+        if (!vv) {
+            bubblePreviewBox.style.top = '60px';
+            return;
+        }
+        const top = vv.offsetTop + 60;
+        bubblePreviewBox.style.top = top + 'px';
+    }
+
+    function restorePreviewPosition() {
+        if (visualViewportHandler && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', visualViewportHandler);
+            window.visualViewport.removeEventListener('scroll', visualViewportHandler);
+            visualViewportHandler = null;
+        }
+        bubblePreviewBox.style.transition = savedBoxStyle.transition || '';
+        bubblePreviewBox.style.position = savedBoxStyle.position || 'sticky';
+        bubblePreviewBox.style.top = savedBoxStyle.top || '10px';
+        bubblePreviewBox.style.left = savedBoxStyle.left || 'auto';
+        bubblePreviewBox.style.right = savedBoxStyle.right || 'auto';
+        bubblePreviewBox.style.zIndex = savedBoxStyle.zIndex || '5';
+        bubblePreviewBox.style.boxShadow = '';
+        pinPreviewBtn.textContent = '📌 固定';
+        isPreviewPinned = false;
+    }
+
+    pinPreviewBtn.addEventListener('click', () => {
+        if (!isPreviewPinned) {
+            savedBoxStyle.position = bubblePreviewBox.style.position;
+            savedBoxStyle.top = bubblePreviewBox.style.top;
+            savedBoxStyle.left = bubblePreviewBox.style.left;
+            savedBoxStyle.right = bubblePreviewBox.style.right;
+            savedBoxStyle.zIndex = bubblePreviewBox.style.zIndex;
+            savedBoxStyle.transition = bubblePreviewBox.style.transition;
+
+            // 初始瞬间到位，避免从旧位置滑动
+            bubblePreviewBox.style.transition = 'none';
+            bubblePreviewBox.style.position = 'fixed';
+            bubblePreviewBox.style.left = 'auto';
+            bubblePreviewBox.style.right = '20px';
+            bubblePreviewBox.style.zIndex = '100';
+            bubblePreviewBox.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
+
+            if (window.visualViewport) {
+                updateFixedPosition(); // 立即设置 top
+            } else {
+                bubblePreviewBox.style.top = '60px';
+            }
+
+            // 下一帧启用过渡，让后续键盘弹出时平滑移动
+            requestAnimationFrame(() => {
+                bubblePreviewBox.style.transition = 'top 0.3s ease, right 0.3s ease';
+            });
+
+            if (window.visualViewport) {
+                visualViewportHandler = () => updateFixedPosition();
+                window.visualViewport.addEventListener('resize', visualViewportHandler);
+                window.visualViewport.addEventListener('scroll', visualViewportHandler);
+            }
+            pinPreviewBtn.textContent = '🔓 解除固定';
+            isPreviewPinned = true;
+        } else {
+            restorePreviewPosition();
+        }
+    });
+
+    // ===== 自动固定：当标题完全被遮挡时自动开启固定 =====
+    let autoPinObserver = null;
+
+    function setupAutoPin() {
+        if (!window.IntersectionObserver || !bubbleTitle) return;
+        if (autoPinObserver) autoPinObserver.disconnect();
+        autoPinObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!bubbleSection.classList.contains('hidden') && !isPreviewPinned && entry.intersectionRatio === 0) {
+                    if (pinPreviewBtn) pinPreviewBtn.click();
+                }
+            });
+        }, { threshold: 0 });
+        autoPinObserver.observe(bubbleTitle);
+    }
+
+    const originalCloseBubbleSection = closeBubbleSection;
+    closeBubbleSection = function() {
+        if (isPreviewPinned) {
+            restorePreviewPosition();
+        }
+        if (autoPinObserver) {
+            autoPinObserver.disconnect();
+            autoPinObserver = null;
+        }
+        originalCloseBubbleSection();
+    };
+
+    // ===== 其他事件绑定 =====
     $('extractBtn').addEventListener('click', handleExtract);
     $('clearBtn').addEventListener('click', clearAll);
     $('copyCodeBtn').addEventListener('click', copyCode);

@@ -116,6 +116,7 @@
                     <p>• 界面新增更新日志按钮及更新时间显示</p>
                     <p>• 修复使用说明按钮点击后蓝色方块残留</p>
                     <p>• 新增描边旋转和文字旋转控件，支持动态预览</p>
+                    <p>• 新增“📌 固定”按钮，解决键盘弹出时预览图跟随滚动问题</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -222,20 +223,25 @@
         </div>
 
         <div class="actions">
+            <!-- 第一行：提取所有颜色 -->
             <div class="actions-row extract-row">
                 <button id="extractBtn" class="primary">🔍 提取所有颜色</button>
             </div>
+            <!-- 第二行：清空、复制代码 -->
             <div class="actions-row">
                 <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
                 <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
             </div>
+            <!-- 第三行：预览SVG（占一整行） -->
             <div class="actions-row">
                 <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
             </div>
+            <!-- 第四行：转为晴天格式、转为晋江格式 -->
             <div class="actions-row">
                 <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
                 <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
             </div>
+            <!-- 第五行：工具（占整行） -->
             <div class="actions-row tool-full-row">
                 <div class="btn-group tool-btn-group" id="toolGroup">
                     <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
@@ -287,7 +293,10 @@
 
         <div id="bubbleSection" class="hidden">
             <div class="bubble-header">
-                <h2 id="bubbleTitle">🎈 气泡预览</h2>
+                <h2 id="bubbleTitle">
+                    <span id="bubbleTitleText">🎈 气泡预览</span>
+                    <button id="pinPreviewBtn" style="font-size:0.75rem; padding:2px 10px; border-radius:14px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; cursor:pointer; transition:all 0.2s; margin-left:8px;">📌 固定</button>
+                </h2>
                 <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <div class="bubble-preview-container">
