@@ -298,7 +298,10 @@
 
     function bindColorPreview(preview, input) { if (!preview || !input) return; preview.addEventListener('click', e => { e.stopPropagation(); colorPicker.open(preview, input); }); }
     bindColorPreview($('replaceColorPreview'), replaceInput); bindColorPreview($('bgColorPreview'), bgColor);
-    bindColorPreview(fillColorPreview, fillColorInput); bindColorPreview(strokeColorPreview, strokeColorInput);
+    bindColorPreview(fillColorPreview, fillColorInput); 
+      bindColorPreview(textFillPreview, textFill);
+
+    bindColorPreview(strokeColorPreview, strokeColorInput);
 
     const colorPickerToolBtn = $('colorPickerToolBtn');
     if (colorPickerToolBtn) { colorPickerToolBtn.addEventListener('click', () => { colorPicker.open(null, null, true); }); }
@@ -952,7 +955,8 @@
     strokeColorInput.addEventListener('input', () => { syncStrokeColorPreview(); updateBubblePreview(); updateVariableStyle(strokeColorInput); updateVariableLabel(strokeColorInput); });
     strokeColorPreview.addEventListener('click', (e) => { e.stopPropagation(); colorPicker.open(strokeColorPreview, strokeColorInput); });
     fillColorInput.addEventListener('input', () => { syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker); updateBubblePreview(); updateVariableStyle(fillColorInput); updateVariableLabel(fillColorInput); });
-    textFill.addEventListener('input', () => { updateBubblePreview(); updateVariableStyle(textFill); updateVariableLabel(textFill); });
+    textFill.addEventListener('input', () => { syncColorPreview(textFill, textFillPreview, textFillPicker);
+    updateBubblePreview(); updateVariableStyle(textFill); updateVariableLabel(textFill); });
     [textX, textY, textSize, textContent, textFont, textWeight, strokeWidth, rotateAngleInput, textRotateAngleInput].forEach(el => { el.addEventListener('input', updateBubblePreview); });
     strokeOpacityInput.addEventListener('input', updateBubblePreview); fillOpacityInput.addEventListener('input', updateBubblePreview);
     bgColor.addEventListener('input', () => syncColorPreview(bgColor, $('bgColorPreview'), $('bgColorPicker')));

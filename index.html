@@ -322,7 +322,12 @@
 
                     <div class="control-section-title">🔤 文字样式</div>
                     <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
-                    <div class="control-row"><label>字体颜色</label><input type="text" id="textFill" value="字" placeholder="字" style="width:160px;"></div>
+                    <div class="control-row">
+    <label>字体颜色</label>
+    <span class="color-preview" id="textFillPreview"></span>
+    <input type="color" id="textFillPicker" class="color-picker" style="display:none;">
+    <input type="text" id="textFill" value="字" placeholder="字" style="width:130px;">
+</div>
                     <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
                     <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
 
