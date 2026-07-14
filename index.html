@@ -37,7 +37,7 @@
                     <p>点击 <strong>"🎈 气泡预览"</strong> 或格式转换按钮打开实时预览面板，你可以调整以下参数：</p>
                     <p>• 文字位置（X/Y坐标）和字号大小</p>
                     <p>• 字体颜色、字体名称、文本内容</p>
-                    <p>• 描边粗细、描边透明度、填充颜色、填充透明度</p>
+                    <p>• 描边粗细、描边颜色、描边透明度、填充颜色、填充透明度</p>
                     <p>• 画布背景颜色</p>
                     <p>调整满意后点击 <strong>"📋 导出气泡格式"</strong> 即可导出或复制最终的SVG代码。</p>
                     <div class="help-tip">💡 推荐使用 <strong>"📐 转为晋江格式"</strong> 快速生成居中文字的阅读量气泡，<strong>"☀️ 转为晴天格式"</strong> 可自动将颜色替换为变量。</div>
@@ -55,6 +55,7 @@
                     <span style="padding-left:24px;">三、动态关键字：<span class="help-shortcut">lighter</span>(更细)、<span class="help-shortcut">bolder</span>(更粗)，不能和数字混用。<br>
                     <span style="padding-left:24px;">四、实际效果取决于字体文件，老旧字体大多只有400、700两档，其余数值会自动就近兼容。</p>
                     <p>• <strong>描边粗细</strong>：数值，控制气泡轮廓线条的宽度。</p>
+                    <p>• <strong>描边颜色</strong>：支持 <span class="help-shortcut">#十六进制</span> 颜色值，也可填写变量名。预览时若填非颜色值会自动使用黑色。晴天模式导出时自动替换为变量。</p>
                     <p>• <strong>描边透明度 / 填充透明度</strong>：<span class="help-shortcut">0 ~ 1</span> 之间的数值，<span class="help-shortcut">0</span> 为完全透明，<span class="help-shortcut">1</span> 为不透明。</p>
                     <p>• <strong>填充颜色</strong>：气泡底色，支持十六进制颜色或变量（如 <span class="help-shortcut">$tccolor</span>）。</p>
                     <p>• <strong>文本内容</strong>：预览时显示的文字，导出时晴天格式会替换为 <span class="help-shortcut">$displayText</span>，其他格式保留实际值。</p>
@@ -104,6 +105,13 @@
                 <button class="help-modal-close" id="changelogModalClose">&times;</button>
             </div>
             <div class="help-modal-body">
+                <div class="help-section">
+                    <h3>2026-07-13</h3>
+                    <p>• 气泡预览新增描边颜色控件，支持取色器选色与实时预览</p>
+                    <p>• 全新自定义取色器，含饱和度/明度大方块、色相条、实时颜色显示与复制、预设常用色</p>
+                    <p>• 工具下拉栏内新增独立取色器按钮，随时取色复制</p>
+                </div>
+                <hr class="help-divider">
                 <div class="help-section">
                     <h3>2026-07-12</h3>
                     <p>• 新增颜色预览和取色器，支持快速选色</p>
@@ -195,7 +203,7 @@
     <div class="container">
         <h1>
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23f97316'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23bg)'/%3E%3Cpath d='M18 38 L28 20 L32 28 L38 18 L46 44 L34 44 L30 38 Z' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='26' cy='48' r='3' fill='white' opacity='0.9'/%3E%3Ccircle cx='42' cy='48' r='2.5' fill='white' opacity='0.9'/%3E%3C/svg%3E" style="width:1.2em; height:1.2em; vertical-align:middle; margin-right:4px;" alt="">legado-svg
-            <span class="update-time">更新于 2026-07-12</span>
+            <span class="update-time">更新于 2026-07-13</span>
             <button class="help-btn" id="helpBtn">📖 使用说明</button>
             <button class="help-btn" id="changelogBtn">📋 更新日志</button>
         </h1>
@@ -225,28 +233,26 @@
         </div>
 
         <div class="actions">
-            <!-- 第一行：提取所有颜色 -->
             <div class="actions-row extract-row">
                 <button id="extractBtn" class="primary">🔍 提取所有颜色</button>
             </div>
-            <!-- 第二行：清空、复制代码 -->
             <div class="actions-row">
                 <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
                 <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
             </div>
-            <!-- 第三行：预览SVG -->
             <div class="actions-row">
                 <button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button>
             </div>
-            <!-- 第四行：转为晴天格式、转为晋江格式 -->
             <div class="actions-row">
                 <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
                 <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
             </div>
-            <!-- 第五行：工具（占整行） -->
             <div class="actions-row tool-full-row">
                 <div class="btn-group tool-btn-group" id="toolGroup">
                     <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
+                    <div class="picker-row">
+                        <button id="colorPickerToolBtn" class="secondary" style="width:100%;">🎨 取色器</button>
+                    </div>
                     <div class="sub-row" id="subRow">
                         <button id="toSvgBtn" class="secondary">🔄 图片转 SVG</button>
                         <button id="customLinkBtn" class="secondary">🔗 自定义链接</button>
@@ -302,24 +308,39 @@
                 <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <div class="bubble-preview-container">
-                <!-- 预览图容器，overflow:visible 确保关闭按钮可见 -->
                 <div class="preview-box" id="bubblePreviewBox" style="overflow: visible;">
-                    <!-- 固定时出现的关闭按钮 -->
                     <button id="closePinBtn" class="close-pin-btn" title="解除固定">✕</button>
                 </div>
                 <div class="bubble-controls" id="bubbleControls">
+                    <!-- 📍 文字位置 -->
+                    <div class="control-section-title">📍 文字位置</div>
                     <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
                     <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1" style="width:160px;"></div>
+
+                    <!-- 🔤 文字样式 -->
+                    <div class="control-section-title">🔤 文字样式</div>
                     <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
                     <div class="control-row"><label>字体颜色</label><input type="text" id="textFill" value="字" placeholder="字" style="width:160px;"></div>
                     <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
                     <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
-                    <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
+
+                    <!-- 💬 文本内容 -->
+                    <div class="control-section-title">💬 文本内容</div>
                     <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
-                    <div class="control-row"><label>描边旋转</label><input type="number" id="rotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
-                    <div class="control-row"><label>文字旋转</label><input type="number" id="textRotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
-                    <!-- 晴天专用控件 -->
+
+                    <!-- ✏️ 描边样式 -->
+                    <div class="control-section-title">✏️ 描边样式</div>
+                    <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
+                    <div class="control-row">
+                        <label>描边颜色</label>
+                        <span class="color-preview" id="strokeColorPreview"></span>
+                        <input type="color" id="strokeColorPicker" class="color-picker" style="display:none;">
+                        <input type="text" id="strokeColorInput" value="#000000" placeholder="#000000" style="width:130px;">
+                    </div>
                     <div class="control-row sunny-only" style="display:none;"><label>描边透明度</label><input type="number" id="strokeOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
+
+                    <!-- 🎨 填充（晴天模式可见） -->
+                    <div class="control-section-title sunny-only" style="display:none;">🎨 填充</div>
                     <div class="control-row sunny-only" style="display:none;">
                         <label>填充颜色</label>
                         <span class="color-preview" id="fillColorPreview"></span>
@@ -327,6 +348,14 @@
                         <input type="text" id="fillColorInput" value="#ffffff" placeholder="#ffffff" style="width:130px;">
                     </div>
                     <div class="control-row sunny-only" style="display:none;"><label>填充透明度</label><input type="number" id="fillOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
+
+                    <!-- 🔄 旋转 -->
+                    <div class="control-section-title">🔄 旋转</div>
+                    <div class="control-row"><label>描边旋转</label><input type="number" id="rotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
+                    <div class="control-row"><label>文字旋转</label><input type="number" id="textRotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
+
+                    <!-- 🖼️ 画布背景 -->
+                    <div class="control-section-title">🖼️ 画布背景</div>
                     <div class="control-row">
                         <label>画布背景</label>
                         <span class="color-preview" id="bgColorPreview"></span>
@@ -334,6 +363,7 @@
                         <input type="text" id="bgColor" value="transparent" placeholder="transparent / #ffffff" style="width:130px;">
                         <button id="applyBgColorBtn" class="btn-apply" style="padding:6px 14px; font-size:0.85rem;">应用</button>
                     </div>
+
                     <div class="bubble-actions">
                         <button id="applyBubbleBtn" class="btn-apply">⟳ 更新预览</button>
                         <button id="exportBubbleBtn" class="btn-export">📋 导出气泡格式</button>
