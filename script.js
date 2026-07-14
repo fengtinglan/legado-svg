@@ -36,6 +36,9 @@
     const helpModalOverlay = $('helpModalOverlay'), helpModalClose = $('helpModalClose'), helpBtn = $('helpBtn');
     const changelogModalOverlay = $('changelogModalOverlay'), changelogModalClose = $('changelogModalClose'), changelogBtn = $('changelogBtn');
 
+    const fillPerShapeContainer = $('fillPerShapeContainer'); // 独立填充容器
+    let shapeFillInputs = []; // 存储每个形状对应的输入框
+
     $('compressBtn').addEventListener('click', openCompressModal);
     $('compressCustomLinkBtn').addEventListener('click', customCompressLink);
 
@@ -98,7 +101,9 @@
                     if (this.targetInput && !this.independentMode) {
                         this.targetInput.value = color;
                         this.syncPreview();
-                        if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput)) updateBubblePreview();
+                        if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                            updateBubblePreview();
+                        }
                     }
                     this.currentInput.value = color;
                     this.applyColorToTarget();
@@ -202,7 +207,9 @@
             if (!this.independentMode && this.targetInput) {
                 this.targetInput.value = color;
                 this.syncPreview();
-                if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput)) updateBubblePreview();
+                if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                    updateBubblePreview();
+                }
             }
         },
         syncPreview() {
@@ -275,6 +282,60 @@
         else previewEl.style.backgroundColor = '#ccc';
     }
 
+    // ===== 独立填充颜色控件 =====
+    function generateFillControls(shapes) {
+        if (!fillPerShapeContainer) return;
+        fillPerShapeContainer.innerHTML = '';
+        shapeFillInputs = [];
+
+        shapes.forEach((shape, i) => {
+            const row = document.createElement('div');
+            row.className = 'control-row';
+
+            const label = document.createElement('label');
+            label.textContent = `区域 ${i+1}`;
+            label.style.width = '70px';
+            label.style.fontSize = '0.9rem';
+            label.style.fontWeight = '500';
+
+            const preview = document.createElement('span');
+            preview.className = 'color-preview';
+
+            const picker = document.createElement('input');
+            picker.type = 'color';
+            picker.className = 'color-picker';
+            picker.style.display = 'none';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'shape-fill-input';
+            input.style.width = '130px';
+            input.placeholder = '#ffffff';
+
+            const currentFill = shape.getAttribute('fill');
+            if (currentFill && currentFill !== 'none' && currentFill !== 'currentColor' && !currentFill.startsWith('$')) {
+                input.value = currentFill;
+            } else {
+                input.value = '#ffffff';
+            }
+            syncColorPreview(input, preview, picker);
+
+            bindColorPreview(preview, input);
+            input.addEventListener('input', () => {
+                syncColorPreview(input, preview, picker);
+                updateBubblePreview();
+            });
+
+            row.appendChild(label);
+            row.appendChild(preview);
+            row.appendChild(picker);
+            row.appendChild(input);
+            fillPerShapeContainer.appendChild(row);
+            shapeFillInputs.push(input);
+        });
+    }
+
+    // ====== 工具函数 ======
     function getCompressUrl() { return localStorage.getItem(COMPRESS_STORAGE_KEY) || DEFAULT_COMPRESS_URL; }
     function setCompressUrl(url) { localStorage.setItem(COMPRESS_STORAGE_KEY, url); updateCompressLinkStatus(); }
     function updateCompressLinkStatus() { const url = getCompressUrl(); const linkEl = $('compressLinkStatus'); try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } }
@@ -328,13 +389,234 @@
     imageUploadZone.addEventListener('dragover', e => { e.preventDefault(); if (currentInputMode === 'image') imageUploadZone.classList.add('drag-over'); });
     imageUploadZone.addEventListener('dragleave', e => { e.preventDefault(); if (!imageUploadZone.contains(e.relatedTarget)) imageUploadZone.classList.remove('drag-over'); });
     imageUploadZone.addEventListener('drop', e => { e.preventDefault(); imageUploadZone.classList.remove('drag-over'); if (currentInputMode === 'image' && e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]); });
-    function applyBackgroundColor() { if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; } const targetColor = bgColor.value.trim(); if (!targetColor) { showToast('请输入背景颜色', 'error'); return; } const parser = new DOMParser(); const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml'); if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; } const svg = doc.documentElement; let vb = svg.getAttribute('viewBox'); let x = 0, y = 0, w = 1153, h = 1024; if (vb) { const parts = vb.trim().split(/\s+/); if (parts.length === 4) { x = parseFloat(parts[0]); y = parseFloat(parts[1]); w = parseFloat(parts[2]); h = parseFloat(parts[3]); } } else { const wAttr = svg.getAttribute('width'), hAttr = svg.getAttribute('height'); w = wAttr ? parseFloat(wAttr) : w; h = hAttr ? parseFloat(hAttr) : h; } let bgEl = svg.querySelector('rect[data-bg="true"]'); if (!bgEl) { const paths = svg.querySelectorAll('path'); for (let p of paths) { const d = p.getAttribute('d'); if (d && /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i.test(d.trim())) { const m = d.trim().match(/^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i); if (m && Math.abs(parseFloat(m[1]) - x) < 1 && Math.abs(parseFloat(m[2]) - y) < 1 && Math.abs(parseFloat(m[3]) - w) < 1 && Math.abs(parseFloat(m[4]) - h) < 1) { bgEl = p; break; } } } if (!bgEl) { bgEl = doc.createElementNS('http://www.w3.org/2000/svg', 'rect'); bgEl.setAttribute('data-bg', 'true'); svg.insertBefore(bgEl, svg.firstChild); } } bgEl.setAttribute('x', x); bgEl.setAttribute('y', y); bgEl.setAttribute('width', w); bgEl.setAttribute('height', h); bgEl.setAttribute('fill', targetColor); if (bgEl.tagName === 'path') bgEl.setAttribute('stroke', 'none'); const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg); updateBubblePreview(); showToast(`✅ 画布背景已设置为 ${targetColor}`, 'success'); }
+    function applyBackgroundColor() { if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; } const targetColor = bgColor.value.trim(); if (!targetColor) { showToast('请输入背景颜色', 'error'); return; } const parser = new DOMParser(); const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml'); if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; } const svg = doc.documentElement; let vb = svg.getAttribute('viewBox'); let x = 0, y = 0, w = 1153, h = 1024; if (vb) { const parts = vb.trim().split(/\s+/); if (parts.length === 4) { x = parseFloat(parts[0]); y = parseFloat(parts[1]); w = parseFloat(parts[2]); h = parseFloat(parts[3]); } } else { const wAttr = svg.getAttribute('width'), hAttr = svg.getAttribute('height'); w = wAttr ? parseFloat(wAttr) : w; h = hAttr ? parseFloat(hAttr) : h; } let bgEl = svg.querySelector('rect[data-bg="true"]'); if (!bgEl) { const shapes = svg.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon'); for (let p of shapes) { const d = p.getAttribute('d'); if (d && /^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i.test(d.trim())) { const m = d.trim().match(/^M\s*([\d.]+)\s+([\d.]+)\s*h\s*([\d.]+)\s*v\s*([\d.]+)\s*H\s*([\d.]+)\s*z$/i); if (m && Math.abs(parseFloat(m[1]) - x) < 1 && Math.abs(parseFloat(m[2]) - y) < 1 && Math.abs(parseFloat(m[3]) - w) < 1 && Math.abs(parseFloat(m[4]) - h) < 1) { bgEl = p; break; } } } if (!bgEl) { bgEl = doc.createElementNS('http://www.w3.org/2000/svg', 'rect'); bgEl.setAttribute('data-bg', 'true'); svg.insertBefore(bgEl, svg.firstChild); } } bgEl.setAttribute('x', x); bgEl.setAttribute('y', y); bgEl.setAttribute('width', w); bgEl.setAttribute('height', h); bgEl.setAttribute('fill', targetColor); if (bgEl.tagName !== 'rect') bgEl.setAttribute('stroke', 'none'); const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg); updateBubblePreview(); showToast(`✅ 画布背景已设置为 ${targetColor}`, 'success'); }
     function setSunnyControlsVisibility(visible) { sunnyControls.forEach(el => { el.style.display = visible ? 'flex' : 'none'; }); }
     function syncStrokeColorPreview() { const val = strokeColorInput.value.trim(); if (/^#[0-9a-fA-F]{3,8}$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val === 'transparent') { strokeColorPreview.style.backgroundColor = val; } else if (val === '') { strokeColorPreview.style.backgroundColor = 'transparent'; } else { strokeColorPreview.style.backgroundColor = '#ccc'; } }
-    function updateBubblePreview() { const code = currentPreviewCode; if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; } const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml'); if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>'; return; } const previewDoc = parser.parseFromString(code, 'image/svg+xml'); const svgEl = previewDoc.documentElement; const paths = previewDoc.querySelectorAll('path'); const rotateAngle = parseFloat(rotateAngleInput.value) || 0; if (paths.length > 0) { const firstPath = paths[0]; firstPath.setAttribute('stroke-width', strokeWidth.value); const strokeColor = strokeColorInput.value.trim(); if (strokeColor && !isSunnyMode) { firstPath.setAttribute('stroke', strokeColor); } else if (isSunnyMode) { firstPath.setAttribute('stroke', strokeColor || '#000000'); firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value); firstPath.setAttribute('fill-opacity', fillOpacityInput.value); firstPath.setAttribute('fill', fillColorInput.value || '#ffffff'); } if (rotateAngle !== 0) { const vb = svgEl.getAttribute('viewBox') || '0 0 1153 1024'; const vbParts = vb.trim().split(/\s+/); const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2; const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2; const existingTransform = firstPath.getAttribute('transform') || ''; const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`; firstPath.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform); } else { const existingTransform = firstPath.getAttribute('transform') || ''; const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim(); if (cleanedTransform) firstPath.setAttribute('transform', cleanedTransform); else firstPath.removeAttribute('transform'); } } const textEl = previewDoc.querySelector('text'); const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0; if (textEl) { textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value); textEl.setAttribute('font-size', textSize.value); textEl.setAttribute('font-family', textFont.value); textEl.setAttribute('font-weight', textWeight.value); if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); } let useColor = textFill.value.trim(); if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(useColor) && !/^rgb/i.test(useColor) && !/^hsl/i.test(useColor) && useColor !== 'transparent') { useColor = '#000000'; } textEl.setAttribute('fill', useColor); textEl.setAttribute('style', `fill: ${useColor}; opacity: 1;`); textEl.textContent = textContent.value || '927'; if (textRotateAngle !== 0) { const existingTransform = textEl.getAttribute('transform') || ''; const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`; textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform); } else { const existingTransform = textEl.getAttribute('transform') || ''; const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim(); if (cleanedTransform) textEl.setAttribute('transform', cleanedTransform); else textEl.removeAttribute('transform'); } } const serializer = new XMLSerializer(); const existingCloseBtn = bubblePreviewBox.querySelector('#closePinBtn'); bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement); if (existingCloseBtn) { bubblePreviewBox.appendChild(existingCloseBtn); } else { const btn = document.createElement('button'); btn.id = 'closePinBtn'; btn.className = 'close-pin-btn'; btn.title = '解除固定'; btn.textContent = '✕'; bubblePreviewBox.appendChild(btn); } const btn = bubblePreviewBox.querySelector('#closePinBtn'); if (btn) { btn.style.display = isPreviewPinned ? 'flex' : 'none'; } }
-    function openBubbleSection() { if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; } const parser = new DOMParser(); const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml'); if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; } const svg = doc.documentElement; const textEl = svg.querySelector('text'); const textInfo = (() => { if (textEl) return { x: textEl.getAttribute('x') || '0', y: textEl.getAttribute('y') || '0', fontSize: textEl.getAttribute('font-size') || '16', fill: textEl.getAttribute('fill') || '#000', content: textEl.textContent || '', fontFamily: textEl.getAttribute('font-family') || 'sans-serif', weight: textEl.getAttribute('font-weight') || 'bold' }; return null; })(); if (textInfo) { textX.value = textInfo.x; textY.value = textInfo.y; textSize.value = textInfo.fontSize; textFill.value = textInfo.fill; textContent.value = '927'; textFont.value = textInfo.fontFamily; textWeight.value = textInfo.weight; } else { textX.value = isSunnyMode ? '13.5' : '550'; textY.value = isSunnyMode ? '12' : '630'; textSize.value = isSunnyMode ? '10' : '400'; textFill.value = isSunnyMode ? '#000000' : '字'; textContent.value = '927'; textFont.value = 'Arial, sans-serif'; textWeight.value = '500'; } const firstPath = svg.querySelector('path'); strokeWidth.value = firstPath ? (firstPath.getAttribute('stroke-width') || (isSunnyMode ? '1' : '6')) : (isSunnyMode ? '1' : '6'); if (firstPath) { const strokeVal = firstPath.getAttribute('stroke'); if (strokeVal && strokeVal !== 'none' && strokeVal !== 'currentColor' && !strokeVal.startsWith('$')) { strokeColorInput.value = strokeVal; } else { strokeColorInput.value = isSunnyMode ? '#000000' : '#000000'; } } else { strokeColorInput.value = '#000000'; } syncStrokeColorPreview(); if (isSunnyMode && firstPath) { strokeOpacityInput.value = firstPath.getAttribute('stroke-opacity') || '1'; let fillVal = firstPath.getAttribute('fill'); if (!fillVal || fillVal === 'none' || fillVal === 'currentColor' || fillVal.startsWith('$')) fillVal = '#ffffff'; fillColorInput.value = fillVal; fillOpacityInput.value = firstPath.getAttribute('fill-opacity') || '1'; syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker); } rotateAngleInput.value = 0; textRotateAngleInput.value = 0; bgColor.value = 'transparent'; syncColorPreview(bgColor, $('bgColorPreview'), $('bgColorPicker')); setSunnyControlsVisibility(isSunnyMode); bubbleSection.classList.remove('hidden'); updateBubblePreview(); applyPin(); }
+
+    // ===== 更新预览（所有形状 + 独立填充） =====
+    function updateBubblePreview() {
+        const code = currentPreviewCode;
+        if (!code || !/<svg\b/i.test(code)) {
+            bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>';
+            return;
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) {
+            bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>';
+            return;
+        }
+        const previewDoc = parser.parseFromString(code, 'image/svg+xml');
+        const svgEl = previewDoc.documentElement;
+
+        const shapes = previewDoc.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
+        const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
+        const strokeColor = strokeColorInput.value.trim();
+
+        shapes.forEach((shape, i) => {
+            shape.setAttribute('stroke-width', strokeWidth.value);
+            if (strokeColor && !isSunnyMode) {
+                shape.setAttribute('stroke', strokeColor);
+            } else if (isSunnyMode) {
+                shape.setAttribute('stroke', strokeColor || '#000000');
+                shape.setAttribute('stroke-opacity', strokeOpacityInput.value);
+                shape.setAttribute('fill-opacity', fillOpacityInput.value);
+                shape.setAttribute('fill', fillColorInput.value || '#ffffff');
+            }
+
+            // 独立填充颜色（非晴天模式）
+            if (!isSunnyMode && shapeFillInputs[i]) {
+                const fillVal = shapeFillInputs[i].value.trim();
+                if (fillVal) {
+                    shape.setAttribute('fill', fillVal);
+                }
+            }
+
+            if (rotateAngle !== 0) {
+                const vb = svgEl.getAttribute('viewBox') || '0 0 1153 1024';
+                const vbParts = vb.trim().split(/\s+/);
+                const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2;
+                const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+                const existingTransform = shape.getAttribute('transform') || '';
+                const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`;
+                shape.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            } else {
+                const existingTransform = shape.getAttribute('transform') || '';
+                const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim();
+                if (cleanedTransform) shape.setAttribute('transform', cleanedTransform);
+                else shape.removeAttribute('transform');
+            }
+        });
+
+        const textEl = previewDoc.querySelector('text');
+        const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
+        if (textEl) {
+            textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value);
+            textEl.setAttribute('font-size', textSize.value); textEl.setAttribute('font-family', textFont.value);
+            textEl.setAttribute('font-weight', textWeight.value);
+            if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); }
+            let useColor = textFill.value.trim();
+            if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(useColor) && !/^rgb/i.test(useColor) && !/^hsl/i.test(useColor) && useColor !== 'transparent') { useColor = '#000000'; }
+            textEl.setAttribute('fill', useColor); textEl.setAttribute('style', `fill: ${useColor}; opacity: 1;`);
+            textEl.textContent = textContent.value || '927';
+
+            if (textRotateAngle !== 0) {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
+                textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            } else {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim();
+                if (cleanedTransform) textEl.setAttribute('transform', cleanedTransform);
+                else textEl.removeAttribute('transform');
+            }
+        }
+
+        const serializer = new XMLSerializer();
+        const existingCloseBtn = bubblePreviewBox.querySelector('#closePinBtn');
+        bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
+        if (existingCloseBtn) {
+            bubblePreviewBox.appendChild(existingCloseBtn);
+        } else {
+            const btn = document.createElement('button');
+            btn.id = 'closePinBtn';
+            btn.className = 'close-pin-btn';
+            btn.title = '解除固定';
+            btn.textContent = '✕';
+            bubblePreviewBox.appendChild(btn);
+        }
+        const btn = bubblePreviewBox.querySelector('#closePinBtn');
+        if (btn) { btn.style.display = isPreviewPinned ? 'flex' : 'none'; }
+    }
+
+    function openBubbleSection() {
+        if (!currentPreviewCode || !/<svg\b/i.test(currentPreviewCode)) { showToast('请先转换格式', 'error'); return; }
+        const parser = new DOMParser(); const doc = parser.parseFromString(currentPreviewCode, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
+        const svg = doc.documentElement;
+        const textEl = svg.querySelector('text');
+        const textInfo = (() => {
+            if (textEl) return {
+                x: textEl.getAttribute('x') || '0', y: textEl.getAttribute('y') || '0',
+                fontSize: textEl.getAttribute('font-size') || '16', fill: textEl.getAttribute('fill') || '#000',
+                content: textEl.textContent || '', fontFamily: textEl.getAttribute('font-family') || 'sans-serif',
+                weight: textEl.getAttribute('font-weight') || 'bold'
+            };
+            return null;
+        })();
+        if (textInfo) {
+            textX.value = textInfo.x; textY.value = textInfo.y; textSize.value = textInfo.fontSize; textFill.value = textInfo.fill;
+            textContent.value = '927'; textFont.value = textInfo.fontFamily; textWeight.value = textInfo.weight;
+        } else {
+            textX.value = isSunnyMode ? '13.5' : '550'; textY.value = isSunnyMode ? '12' : '630'; textSize.value = isSunnyMode ? '10' : '400';
+            textFill.value = isSunnyMode ? '#000000' : '字'; textContent.value = '927'; textFont.value = 'Arial, sans-serif'; textWeight.value = '500';
+        }
+
+        const shapes = svg.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
+        const firstShape = shapes[0];
+        strokeWidth.value = firstShape ? (firstShape.getAttribute('stroke-width') || (isSunnyMode ? '1' : '6')) : (isSunnyMode ? '1' : '6');
+        if (firstShape) {
+            const strokeVal = firstShape.getAttribute('stroke');
+            if (strokeVal && strokeVal !== 'none' && strokeVal !== 'currentColor' && !strokeVal.startsWith('$')) {
+                strokeColorInput.value = strokeVal;
+            } else {
+                strokeColorInput.value = isSunnyMode ? '#000000' : '#000000';
+            }
+        } else {
+            strokeColorInput.value = '#000000';
+        }
+        syncStrokeColorPreview();
+
+        // 生成形状填充颜色控件
+        generateFillControls(shapes);
+
+        if (isSunnyMode && firstShape) {
+            strokeOpacityInput.value = firstShape.getAttribute('stroke-opacity') || '1';
+            let fillVal = firstShape.getAttribute('fill');
+            if (!fillVal || fillVal === 'none' || fillVal === 'currentColor' || fillVal.startsWith('$')) fillVal = '#ffffff';
+            fillColorInput.value = fillVal; fillOpacityInput.value = firstShape.getAttribute('fill-opacity') || '1';
+            syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+        }
+        rotateAngleInput.value = 0;
+        textRotateAngleInput.value = 0;
+        bgColor.value = 'transparent';
+        syncColorPreview(bgColor, $('bgColorPreview'), $('bgColorPicker'));
+
+        // 控制独立填充容器和标题的显示（晴天模式隐藏）
+        const fillTitle = fillPerShapeContainer?.previousElementSibling;
+        if (fillTitle && fillTitle.classList.contains('control-section-title')) {
+            fillTitle.style.display = isSunnyMode ? 'none' : '';
+        }
+        if (fillPerShapeContainer) {
+            fillPerShapeContainer.style.display = isSunnyMode ? 'none' : '';
+        }
+        setSunnyControlsVisibility(isSunnyMode);
+
+        bubbleSection.classList.remove('hidden');
+        updateBubblePreview();
+        applyPin();
+    }
+
     function closeBubbleSection() { bubbleSection.classList.add('hidden'); bubbleCodeOutput.classList.remove('show'); }
-    function generateBubbleSvg() { const code = currentPreviewCode; if (!code || !/<svg\b/i.test(code)) return null; const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml'); if (doc.querySelector('parsererror')) return null; const textEl = doc.querySelector('text'); if (textEl) { textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value); textEl.setAttribute('font-size', textSize.value); textEl.setAttribute('font-family', textFont.value); const fillVal = textEl.getAttribute('fill') || ''; if (!fillVal.startsWith('$')) textEl.setAttribute('fill', textFill.value); textEl.setAttribute('font-weight', textWeight.value); if (!textEl.textContent.startsWith('$')) textEl.textContent = textContent.value; const style = textEl.getAttribute('style'); if (style) { textEl.setAttribute('style', fillVal.startsWith('$') ? style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;') : style.replace(/fill:\s*[^;]+;?/g, `fill: ${textFill.value};`)); } if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); } const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0; if (textRotateAngle !== 0) { const existingTransform = textEl.getAttribute('transform') || ''; const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`; textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform); } } const paths = doc.querySelectorAll('path'); if (paths.length > 0) { const firstPath = paths[0]; firstPath.setAttribute('stroke-width', strokeWidth.value); if (isSunnyMode) { firstPath.setAttribute('stroke', '$color'); firstPath.setAttribute('fill', '$tccolor'); firstPath.setAttribute('stroke-opacity', strokeOpacityInput.value); firstPath.setAttribute('fill-opacity', fillOpacityInput.value); const style = firstPath.getAttribute('style'); if (style) firstPath.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;')); } else { firstPath.setAttribute('stroke', strokeColorInput.value || '#000000'); } const rotateAngle = parseFloat(rotateAngleInput.value) || 0; if (rotateAngle !== 0) { const vb = doc.documentElement.getAttribute('viewBox') || '0 0 1153 1024'; const vbParts = vb.trim().split(/\s+/); const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2; const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2; const existingTransform = firstPath.getAttribute('transform') || ''; const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`; firstPath.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform); } } const serializer = new XMLSerializer(); return serializer.serializeToString(doc.documentElement); }
+
+    function generateBubbleSvg() {
+        const code = currentPreviewCode;
+        if (!code || !/<svg\b/i.test(code)) return null;
+        const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) return null;
+        const textEl = doc.querySelector('text');
+        if (textEl) {
+            textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value); textEl.setAttribute('font-size', textSize.value);
+            textEl.setAttribute('font-family', textFont.value); const fillVal = textEl.getAttribute('fill') || '';
+            if (!fillVal.startsWith('$')) textEl.setAttribute('fill', textFill.value);
+            textEl.setAttribute('font-weight', textWeight.value);
+            if (!textEl.textContent.startsWith('$')) textEl.textContent = textContent.value;
+            const style = textEl.getAttribute('style');
+            if (style) { textEl.setAttribute('style', fillVal.startsWith('$') ? style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;') : style.replace(/fill:\s*[^;]+;?/g, `fill: ${textFill.value};`)); }
+            if (isSunnyMode) { textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); }
+            const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
+            if (textRotateAngle !== 0) {
+                const existingTransform = textEl.getAttribute('transform') || '';
+                const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
+                textEl.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            }
+        }
+        const shapes = doc.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
+        shapes.forEach((shape, i) => {
+            shape.setAttribute('stroke-width', strokeWidth.value);
+            if (isSunnyMode) {
+                shape.setAttribute('stroke', '$color');
+                shape.setAttribute('fill', '$tccolor');
+                shape.setAttribute('stroke-opacity', strokeOpacityInput.value);
+                shape.setAttribute('fill-opacity', fillOpacityInput.value);
+                const style = shape.getAttribute('style');
+                if (style) shape.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;'));
+            } else {
+                shape.setAttribute('stroke', strokeColorInput.value || '#000000');
+                if (shapeFillInputs[i]) {
+                    const fillVal = shapeFillInputs[i].value.trim();
+                    if (fillVal) shape.setAttribute('fill', fillVal);
+                }
+            }
+            const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
+            if (rotateAngle !== 0) {
+                const vb = doc.documentElement.getAttribute('viewBox') || '0 0 1153 1024';
+                const vbParts = vb.trim().split(/\s+/);
+                const cx = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2;
+                const cy = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+                const existingTransform = shape.getAttribute('transform') || '';
+                const newTransform = `rotate(${rotateAngle} ${cx} ${cy})`;
+                shape.setAttribute('transform', existingTransform ? `${existingTransform} ${newTransform}` : newTransform);
+            } else {
+                const existingTransform = shape.getAttribute('transform') || '';
+                const cleanedTransform = existingTransform.replace(/rotate\([^)]+\)/g, '').trim();
+                if (cleanedTransform) shape.setAttribute('transform', cleanedTransform);
+                else shape.removeAttribute('transform');
+            }
+        });
+        const serializer = new XMLSerializer(); return serializer.serializeToString(doc.documentElement);
+    }
+
     function openExportModal() { const svgCode = generateBubbleSvg(); if (!svgCode) { showToast('没有可导出的代码', 'error'); return; } bubbleCodeOutput.textContent = svgCode; bubbleCodeOutput.classList.add('show'); exportModalOverlay._svgCode = svgCode; exportModalOverlay.classList.add('active'); }
     function closeExportModal() { exportModalOverlay.classList.remove('active'); delete exportModalOverlay._svgCode; }
     function exportCopyCode() { const svgCode = exportModalOverlay._svgCode || generateBubbleSvg(); if (!svgCode) { showToast('没有可复制的代码', 'error'); return; } copyText(svgCode, '✅ 气泡代码已复制到剪贴板'); closeExportModal(); }
@@ -342,8 +624,69 @@
     function exportAsSvg() { const svgCode = exportModalOverlay._svgCode || generateBubbleSvg(); if (!svgCode) { showToast('没有可导出的代码', 'error'); return; } triggerDownload(svgCode, 'bubble-export.svg', 'image/svg+xml;charset=utf-8'); showToast('✅ SVG 文件已开始下载', 'success'); closeExportModal(); }
     function triggerDownload(content, filename, mimeType) { const blob = new Blob([content], { type: mimeType }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 300); }
     exportBubbleBtn.addEventListener('click', openExportModal); exportModalClose.addEventListener('click', closeExportModal); exportModalOverlay.addEventListener('click', e => { if (e.target === exportModalOverlay) closeExportModal(); }); exportCopyCodeBtn.addEventListener('click', exportCopyCode); exportTxtBtn.addEventListener('click', exportAsTxt); exportSvgBtn.addEventListener('click', exportAsSvg);
+
     function convertToReadingFormat() { isSunnyMode = false; const code = input.value.trim(); if (!code || !/<svg\b/i.test(code)) { showToast('请先输入有效的 SVG 代码', 'error'); return; } const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml'); if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; } const svg = doc.documentElement; let vb = svg.getAttribute('viewBox'); let minX = 0, minY = 0, width = 1153, height = 1024; if (vb) { const parts = vb.trim().split(/\s+/); if (parts.length === 4) { minX = parseFloat(parts[0]); minY = parseFloat(parts[1]); width = parseFloat(parts[2]); height = parseFloat(parts[3]); } } else { const wAttr = svg.getAttribute('width'), hAttr = svg.getAttribute('height'); width = wAttr ? parseFloat(wAttr) : width; height = hAttr ? parseFloat(hAttr) : height; } const imageEl = svg.querySelector('image'); if (imageEl) { imageEl.setAttribute('x', minX); imageEl.setAttribute('y', minY); imageEl.setAttribute('width', width); imageEl.setAttribute('height', height); } const cx = minX + width / 2, cy = minY + height / 2; let textEl = svg.querySelector('text'); if (!textEl) { textEl = doc.createElementNS('http://www.w3.org/2000/svg', 'text'); svg.appendChild(textEl); } textEl.setAttribute('x', cx); textEl.setAttribute('y', cy); textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); if (!textEl.getAttribute('font-size')) textEl.setAttribute('font-size', '42'); textEl.setAttribute('fill', '字'); textEl.setAttribute('font-weight', 'bold'); textEl.textContent = '数量'; const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg); bubbleTitleText.textContent = '📐 晋江气泡预览'; openBubbleSection(); showToast('✅ 已转换为晋江格式，可微调后导出', 'success'); }
-    function handleSunnyFormat() { isSunnyMode = true; const code = input.value.trim(); if (!code || !/<svg\b/i.test(code)) { showToast('请先输入有效的 SVG 代码', 'error'); return; } const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml'); if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; } const svg = doc.documentElement; const vb = svg.getAttribute('viewBox') || '0 0 1153 1024'; const vbParts = vb.trim().split(/\s+/); const centerX = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2; const centerY = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2; const paths = svg.querySelectorAll('path'); paths.forEach(p => { const stroke = p.getAttribute('stroke'); if (stroke && stroke !== 'none' && stroke !== 'currentColor' && !/^\$/.test(stroke)) p.setAttribute('stroke', '$color'); const fill = p.getAttribute('fill'); if (fill && fill !== 'none' && fill !== 'currentColor' && !/^\$/.test(fill)) p.setAttribute('fill', '$tccolor'); const style = p.getAttribute('style'); if (style) p.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;')); }); const textEl = svg.querySelector('text'); let origFill = '#000000', origFontSize = '10', origFontFamily = 'Arial', origWeight = '500'; if (textEl) { origFill = textEl.getAttribute('fill') || origFill; origFontSize = textEl.getAttribute('font-size') || origFontSize; origFontFamily = textEl.getAttribute('font-family') || origFontFamily; origWeight = textEl.getAttribute('font-weight') || origWeight; textEl.setAttribute('fill', '$fontcolor'); textEl.textContent = '$displayText'; textEl.setAttribute('x', centerX); textEl.setAttribute('y', centerY); textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle'); const style = textEl.getAttribute('style'); if (style) textEl.setAttribute('style', style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;')); } else { const newText = doc.createElementNS('http://www.w3.org/2000/svg', 'text'); newText.setAttribute('x', centerX); newText.setAttribute('y', centerY); newText.setAttribute('fill', '$fontcolor'); newText.setAttribute('font-family', 'Arial, sans-serif'); newText.setAttribute('font-size', '10'); newText.setAttribute('font-weight', '500'); newText.textContent = '$displayText'; newText.setAttribute('text-anchor', 'middle'); newText.setAttribute('dominant-baseline', 'middle'); svg.appendChild(newText); } const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg); bubbleTitleText.textContent = '☀️ 晴天气泡预览'; textX.value = centerX; textY.value = centerY; textSize.value = origFontSize; textFill.value = origFill; textContent.value = '927'; textFont.value = origFontFamily; textWeight.value = origWeight; if (paths.length > 0) { const firstPath = paths[0]; strokeWidth.value = firstPath.getAttribute('stroke-width') || '1'; strokeOpacityInput.value = firstPath.getAttribute('stroke-opacity') || '1'; let fillVal = firstPath.getAttribute('fill'); if (!fillVal || fillVal === 'none' || fillVal.startsWith('$')) fillVal = '#ffffff'; fillColorInput.value = fillVal; fillOpacityInput.value = firstPath.getAttribute('fill-opacity') || '1'; syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker); strokeColorInput.value = '#000000'; } syncStrokeColorPreview(); setSunnyControlsVisibility(true); bubbleSection.classList.remove('hidden'); updateBubblePreview(); applyPin(); showToast('☀️ 已转为晴天格式（颜色已替换为变量）', 'success'); }
+
+    function handleSunnyFormat() {
+        isSunnyMode = true;
+        const code = input.value.trim();
+        if (!code || !/<svg\b/i.test(code)) { showToast('请先输入有效的 SVG 代码', 'error'); return; }
+        const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) { showToast('SVG 解析失败', 'error'); return; }
+        const svg = doc.documentElement;
+        const vb = svg.getAttribute('viewBox') || '0 0 1153 1024'; const vbParts = vb.trim().split(/\s+/);
+        const centerX = parseFloat(vbParts[0]) + parseFloat(vbParts[2]) / 2; const centerY = parseFloat(vbParts[1]) + parseFloat(vbParts[3]) / 2;
+        const shapes = svg.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
+        shapes.forEach(p => {
+            const stroke = p.getAttribute('stroke'); if (stroke && stroke !== 'none' && stroke !== 'currentColor' && !/^\$/.test(stroke)) p.setAttribute('stroke', '$color');
+            const fill = p.getAttribute('fill'); if (fill && fill !== 'none' && fill !== 'currentColor' && !/^\$/.test(fill)) p.setAttribute('fill', '$tccolor');
+            const style = p.getAttribute('style'); if (style) p.setAttribute('style', style.replace(/stroke:\s*[^;]+;?/g, 'stroke: $color;').replace(/fill:\s*[^;]+;?/g, 'fill: $tccolor;'));
+        });
+        const textEl = svg.querySelector('text');
+        let origFill = '#000000', origFontSize = '10', origFontFamily = 'Arial', origWeight = '500';
+        if (textEl) {
+            origFill = textEl.getAttribute('fill') || origFill; origFontSize = textEl.getAttribute('font-size') || origFontSize;
+            origFontFamily = textEl.getAttribute('font-family') || origFontFamily; origWeight = textEl.getAttribute('font-weight') || origWeight;
+            textEl.setAttribute('fill', '$fontcolor'); textEl.textContent = '$displayText';
+            textEl.setAttribute('x', centerX); textEl.setAttribute('y', centerY);
+            textEl.setAttribute('text-anchor', 'middle'); textEl.setAttribute('dominant-baseline', 'middle');
+            const style = textEl.getAttribute('style'); if (style) textEl.setAttribute('style', style.replace(/fill:\s*[^;]+;?/g, 'fill: $fontcolor;'));
+        } else {
+            const newText = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+            newText.setAttribute('x', centerX); newText.setAttribute('y', centerY); newText.setAttribute('fill', '$fontcolor');
+            newText.setAttribute('font-family', 'Arial, sans-serif'); newText.setAttribute('font-size', '10'); newText.setAttribute('font-weight', '500');
+            newText.textContent = '$displayText'; newText.setAttribute('text-anchor', 'middle'); newText.setAttribute('dominant-baseline', 'middle');
+            svg.appendChild(newText);
+        }
+        const serializer = new XMLSerializer(); currentPreviewCode = serializer.serializeToString(svg);
+        bubbleTitleText.textContent = '☀️ 晴天气泡预览';
+        textX.value = centerX; textY.value = centerY; textSize.value = origFontSize; textFill.value = origFill;
+        textContent.value = '927'; textFont.value = origFontFamily; textWeight.value = origWeight;
+        if (shapes.length > 0) {
+            const firstShape = shapes[0];
+            strokeWidth.value = firstShape.getAttribute('stroke-width') || '1';
+            strokeOpacityInput.value = firstShape.getAttribute('stroke-opacity') || '1';
+            let fillVal = firstShape.getAttribute('fill'); if (!fillVal || fillVal === 'none' || fillVal.startsWith('$')) fillVal = '#ffffff';
+            fillColorInput.value = fillVal; fillOpacityInput.value = firstShape.getAttribute('fill-opacity') || '1';
+            syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker);
+            strokeColorInput.value = '#000000';
+        }
+        syncStrokeColorPreview();
+
+        // 晴天模式：隐藏独立填充，显示全局填充
+        const fillTitle = fillPerShapeContainer?.previousElementSibling;
+        if (fillTitle && fillTitle.classList.contains('control-section-title')) {
+            fillTitle.style.display = 'none';
+        }
+        if (fillPerShapeContainer) fillPerShapeContainer.style.display = 'none';
+        setSunnyControlsVisibility(true);
+
+        bubbleSection.classList.remove('hidden');
+        updateBubblePreview();
+        applyPin();
+        showToast('☀️ 已转为晴天格式（颜色已替换为变量）', 'success');
+    }
+
     applyBgColorBtn.addEventListener('click', applyBackgroundColor); convertReadingBtn.addEventListener('click', convertToReadingFormat); sunnyFormatBtn.addEventListener('click', handleSunnyFormat); $('closeBubbleBtn').addEventListener('click', closeBubbleSection); applyBubbleBtn.addEventListener('click', updateBubblePreview);
     strokeColorInput.addEventListener('input', () => { syncStrokeColorPreview(); updateBubblePreview(); });
     strokeColorPreview.addEventListener('click', (e) => { e.stopPropagation(); colorPicker.open(strokeColorPreview, strokeColorInput); });
