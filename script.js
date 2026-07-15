@@ -31,8 +31,7 @@
     const bubbleSection = $('bubbleSection'), bubblePreviewBox = $('bubblePreviewBox');
     const bubbleTitleText = $('bubbleTitleText');
     const textX = $('textX'), textY = $('textY'), textSize = $('textSize');
-    const textFill = $('textFill'), textFillPreview = $('textFillPreview'), textFillPicker = $('textFillPicker');
-    const textContent = $('textContent'), textFont = $('textFont'), textWeight = $('textWeight');
+    const textFill = $('textFill'), textContent = $('textContent'), textFont = $('textFont'), textWeight = $('textWeight');
     const strokeWidth = $('strokeWidth'), strokeColorInput = $('strokeColorInput'), strokeColorPreview = $('strokeColorPreview'), strokeColorPicker = $('strokeColorPicker');
     const bgColor = $('bgColor'), applyBgColorBtn = $('applyBgColorBtn');
     const applyBubbleBtn = $('applyBubbleBtn'), exportBubbleBtn = $('exportBubbleBtn'), bubbleCodeOutput = $('bubbleCodeOutput');
@@ -54,7 +53,115 @@
     let tccolorModalOverlay, tccolorModal, tccolorCheckContainer, tccolorConfirmBtn, tccolorCancelBtn, tccolorCloseBtn;
     let isTccolorModalOpen = false;
 
-    // 隐藏保留修改按钮行
+    function createTccolorModal() {
+    tccolorModalOverlay = document.createElement('div');
+    tccolorModalOverlay.className = 'help-modal-overlay';
+    tccolorModalOverlay.style.zIndex = '10005';
+    document.body.appendChild(tccolorModalOverlay);
+
+    tccolorModal = document.createElement('div');
+    tccolorModal.className = 'help-modal';
+    tccolorModal.style.maxWidth = '480px';
+    tccolorModal.innerHTML = `
+        <div class="help-modal-header">
+            <h2>🎨 选择 $tccolor 形状</h2>
+            <button class="help-modal-close" id="tccolorModalCloseBtn">&times;</button>
+        </div>
+        <div class="help-modal-body">
+            <p style="margin-bottom:12px;">请至少选择一个形状区域使用 <strong>$tccolor</strong> 变量（勾选后预览图将显示斜线标记）：</p>
+            <div id="tccolorCheckContainer" style="max-height: 100px; overflow-y: auto;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                <button id="tccolorSelectAllBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">全选</button>
+                <button id="tccolorConfirmBtn" class="btn-apply" style="padding:8px 20px;">确认</button>
+                <button id="tccolorCancelBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">取消</button>
+            </div>
+        </div>
+    `;
+    tccolorModalOverlay.appendChild(tccolorModal);
+
+    tccolorCheckContainer = tccolorModal.querySelector('#tccolorCheckContainer');
+    tccolorConfirmBtn = tccolorModal.querySelector('#tccolorConfirmBtn');
+    tccolorCancelBtn = tccolorModal.querySelector('#tccolorCancelBtn');
+    tccolorCloseBtn = tccolorModal.querySelector('#tccolorModalCloseBtn');
+
+    tccolorConfirmBtn.addEventListener('click', onTccolorConfirm);
+    tccolorCancelBtn.addEventListener('click', onTccolorCancel);
+    tccolorCloseBtn.addEventListener('click', onTccolorCancel);
+    tccolorModalOverlay.addEventListener('click', e => {
+        if (e.target === tccolorModalOverlay) onTccolorCancel();
+    });
+}
+
+function openTccolorModal() {
+    const shapeCount = shapeFillInputs.length;
+    if (shapeCount === 0) {
+        showToast('没有可选的形状区域', 'error');
+        return;
+    }
+    _backupSelectedTccolorIndices = [...selectedTccolorIndices];
+    tccolorCheckContainer.innerHTML = '';
+    for (let i = 0; i < shapeCount; i++) {
+        const row = document.createElement('div');
+        row.className = 'kv-row';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'tccolor-check-item';
+        cb.value = i;
+        cb.checked = selectedTccolorIndices.includes(i);
+        const label = document.createElement('span');
+        label.textContent = `区域 ${i + 1} (当前颜色: ${shapeFillInputs[i].value})`;
+        row.appendChild(cb);
+        row.appendChild(label);
+        tccolorCheckContainer.appendChild(row);
+        cb.addEventListener('change', () => {
+            const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
+            selectedTccolorIndices = allCbs.filter(c => c.checked).map(c => parseInt(c.value));
+            updateBubblePreview();
+        });
+    }
+
+    // 绑定全选按钮事件
+    const selectAllBtn = tccolorModal.querySelector('#tccolorSelectAllBtn');
+    if (selectAllBtn) {
+        selectAllBtn.onclick = () => {
+            const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
+            // 检查当前是否所有复选框都已选中
+            const allChecked = allCbs.every(cb => cb.checked);
+            allCbs.forEach(cb => { cb.checked = !allChecked; });
+            selectedTccolorIndices = allChecked ? [] : allCbs.map(cb => parseInt(cb.value));
+            selectAllBtn.textContent = allChecked ? '全选' : '取消全选';
+            updateBubblePreview();
+        };
+    }
+
+    isTccolorModalOpen = true;
+    tccolorModalOverlay.classList.add('active');
+}
+    function closeTccolorModal() {
+        isTccolorModalOpen = false;
+        tccolorModalOverlay.classList.remove('active');
+    }
+
+    function onTccolorConfirm() {
+        const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
+        const checked = allCbs.filter(c => c.checked).map(c => parseInt(c.value));
+        if (checked.length === 0) {
+            showToast('请至少选择一个形状区域作为 $tccolor', 'error');
+            return;
+        }
+        selectedTccolorIndices = checked;
+        closeTccolorModal();
+        showKeepModifiedModal();
+    }
+
+    function onTccolorCancel() {
+        selectedTccolorIndices = [..._backupSelectedTccolorIndices];
+        closeTccolorModal();
+        updateBubblePreview();
+    }
+
+    createTccolorModal();
+
     const keepModifiedRow = $('keepModifiedRow');
     if (keepModifiedRow) keepModifiedRow.style.display = 'none';
     const keepModifiedBtn = $('keepModifiedBtn');
@@ -81,6 +188,7 @@
     }
     fillPerShapeContainer.style.maxHeight = '300px';
     fillPerShapeContainer.style.overflowY = 'auto';
+
     let shapeFillInputs = [];
     let shapeFillOpacityInputs = [];
 
@@ -89,7 +197,6 @@
 
     const TEXT_EXTENSIONS = new Set(['svg','txt','html','htm','xml','css','js','json','md','ts','jsx','tsx','vue','svelte']);
 
-    // ===== 自定义取色器 =====
     const colorPicker = {
         panel: null, overlay: null, svCanvas: null, svCtx: null, svCursor: null,
         hueBar: null, hueThumb: null, currentInput: null, copyBtn: null,
@@ -205,8 +312,10 @@
 
     function bindColorPreview(preview, input) { if (!preview || !input) return; preview.addEventListener('click', e => { e.stopPropagation(); colorPicker.open(preview, input); }); }
     bindColorPreview($('replaceColorPreview'), replaceInput); bindColorPreview($('bgColorPreview'), bgColor);
-    bindColorPreview(fillColorPreview, fillColorInput); bindColorPreview(strokeColorPreview, strokeColorInput);
+    bindColorPreview(fillColorPreview, fillColorInput); 
     bindColorPreview(textFillPreview, textFill);
+
+    bindColorPreview(strokeColorPreview, strokeColorInput);
 
     const colorPickerToolBtn = $('colorPickerToolBtn');
     if (colorPickerToolBtn) { colorPickerToolBtn.addEventListener('click', () => { colorPicker.open(null, null, true); }); }
@@ -381,7 +490,7 @@
     uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (currentInputMode === 'upload' && e.dataTransfer.files[0]) readFileAndPopulate(e.dataTransfer.files[0]); });
     function loadImageAsBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
     function getImageDimensions(base64) { return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight }); img.onerror = reject; img.src = base64; }); }
-    async function createImageBubble(base64) { try { const dims = await getImageDimensions(base64); const w = dims.width; const h = dims.height; const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('xmlns', svgNS); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', w); svg.setAttribute('height', h); const image = document.createElementNS(svgNS, 'image'); image.setAttribute('x', '0'); image.setAttribute('y', '0'); image.setAttribute('width', w); image.setAttribute('height', h); image.setAttribute('href', base64); svg.appendChild(image); const text = document.createElementNS(svgNS, 'text'); text.setAttribute('x', w / 2); text.setAttribute('y', h / 2 + 30); text.setAttribute('text-anchor', 'middle'); text.setAttribute('dy', '0.35em'); text.setAttribute('font-size', Math.max(16, Math.round(h / 10))); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-weight', 'bold'); text.setAttribute('fill', '#d500ff'); text.textContent = '数量'; svg.appendChild(text); const serializer = new XMLSerializer(); return serializer.serializeToString(svg); } catch (err) { showToast('图片处理失败: ' + err.message, 'error'); return null; } }
+    async function createImageBubble(base64) { try { const dims = await getImageDimensions(base64); const w = dims.width; const h = dims.height; const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('xmlns', svgNS); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', w); svg.setAttribute('height', h); const image = document.createElementNS(svgNS, 'image'); image.setAttribute('x', '0'); image.setAttribute('y', '0'); image.setAttribute('width', w); image.setAttribute('height', h); image.setAttribute('href', base64); svg.appendChild(image); const text = document.createElementNS(svgNS, 'text'); text.setAttribute('x', w / 2); text.setAttribute('y', h / 2 + 30); text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle'); text.setAttribute('font-size', Math.max(16, Math.round(h / 10))); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-weight', 'bold'); text.setAttribute('fill', '#d500ff'); text.textContent = '数量'; svg.appendChild(text); const serializer = new XMLSerializer(); return serializer.serializeToString(svg); } catch (err) { showToast('图片处理失败: ' + err.message, 'error'); return null; } }
     async function handleImageFile(file) { if (!file) return; imageUploadZone.classList.add('loading'); try { const base64 = await loadImageAsBase64(file); const svgCode = await createImageBubble(base64); if (svgCode) { input.value = svgCode; setInputMode('code'); imageUploadZone.classList.remove('loading'); imageFileInput.value = ''; handleExtract(); currentPreviewCode = svgCode; isSunnyMode = false; bubbleTitleText.textContent = '🎈 气泡预览'; openBubbleSection(); showToast('✅ 图片气泡已生成，可调整文本', 'success'); } else { imageUploadZone.classList.remove('loading'); } } catch (err) { imageUploadZone.classList.remove('loading'); imageFileInput.value = ''; showToast('图片处理失败: ' + err.message, 'error'); } }
     imageFileInput.addEventListener('change', e => { if (e.target.files[0]) handleImageFile(e.target.files[0]); });
     imageUploadZone.addEventListener('dragover', e => { e.preventDefault(); if (currentInputMode === 'image') imageUploadZone.classList.add('drag-over'); });
@@ -519,14 +628,13 @@
             textEl.setAttribute('x', textX.value); textEl.setAttribute('y', textY.value);
             textEl.setAttribute('font-size', textSize.value); textEl.setAttribute('font-family', textFont.value);
             textEl.setAttribute('font-weight', textWeight.value);
+            textEl.setAttribute('text-anchor', 'middle');
+            textEl.setAttribute('dy', '0.35em');
             let useColor = textFill.value.trim();
             if (isSunnyMode && textFill.dataset.variable && useColor === originalTextFill) useColor = originalTextFill;
             else if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(useColor) && !/^rgb/i.test(useColor) && !/^hsl/i.test(useColor) && useColor !== 'transparent') useColor = '#000000';
             applyColorWithOpacity(textEl, useColor, null, 'fill');
             textEl.textContent = textContent.value || '927';
-            // 统一对齐方式
-            textEl.setAttribute('text-anchor', 'middle');
-            textEl.setAttribute('dy', '0.35em');
             if (textRotateAngle !== 0) {
                 const existingTransform = textEl.getAttribute('transform') || '';
                 const newTransform = `rotate(${textRotateAngle} ${textX.value} ${textY.value})`;
@@ -648,7 +756,6 @@
                 applyColorWithOpacity(textEl, textFill.value, null, 'fill');
                 textEl.textContent = '数量';
             }
-            // 统一对齐方式
             textEl.setAttribute('text-anchor', 'middle');
             textEl.setAttribute('dy', '0.35em');
             const textRotateAngle = parseFloat(textRotateAngleInput.value) || 0;
@@ -864,7 +971,8 @@
     strokeColorInput.addEventListener('input', () => { syncStrokeColorPreview(); updateBubblePreview(); updateVariableStyle(strokeColorInput); updateVariableLabel(strokeColorInput); });
     strokeColorPreview.addEventListener('click', (e) => { e.stopPropagation(); colorPicker.open(strokeColorPreview, strokeColorInput); });
     fillColorInput.addEventListener('input', () => { syncColorPreview(fillColorInput, fillColorPreview, fillColorPicker); updateBubblePreview(); updateVariableStyle(fillColorInput); updateVariableLabel(fillColorInput); });
-    textFill.addEventListener('input', () => { syncColorPreview(textFill, textFillPreview, textFillPicker); updateBubblePreview(); updateVariableStyle(textFill); updateVariableLabel(textFill); });
+    textFill.addEventListener('input', () => { syncColorPreview(textFill, textFillPreview, textFillPicker);
+    updateBubblePreview(); updateVariableStyle(textFill); updateVariableLabel(textFill); });
     [textX, textY, textSize, textContent, textFont, textWeight, strokeWidth, rotateAngleInput, textRotateAngleInput].forEach(el => { el.addEventListener('input', updateBubblePreview); });
     strokeOpacityInput.addEventListener('input', updateBubblePreview); fillOpacityInput.addEventListener('input', updateBubblePreview);
     bgColor.addEventListener('input', () => syncColorPreview(bgColor, $('bgColorPreview'), $('bgColorPicker')));
