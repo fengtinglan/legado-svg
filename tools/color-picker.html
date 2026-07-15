@@ -6,31 +6,228 @@
     <title>颜色选择器 - legado-svg</title>
     <link rel="icon" type="image/svg+xml" href="https://legado-svg.heartthrob.cn/images/legado-svg.svg">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .container { background: white; border-radius: 24px; box-shadow: 0 12px 48px rgba(0,0,0,0.07); padding: 30px; max-width: 400px; width: 100%; }
-        h2 { font-size: 1.4rem; color: #0f172a; display: flex; align-items: center; gap: 10px; margin: 0 0 24px; }
-        h2 img { width: 1.3em; height: 1.3em; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        .color-picker-panel { display: flex; flex-direction: column; gap: 16px; }
-        .cp-sv-box { width: 100%; height: 220px; border-radius: 12px; position: relative; cursor: crosshair; touch-action: none; overflow: hidden; border: 1px solid #e2e8f0; }
-        .cp-sv-box canvas { display: block; width: 100%; height: 100%; }
-        .cp-sv-cursor { position: absolute; width: 18px; height: 18px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); pointer-events: none; transform: translate(-50%, -50%); }
-        .cp-hue-bar { width: 100%; height: 28px; border-radius: 14px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); position: relative; cursor: pointer; touch-action: none; border: 1px solid #e2e8f0; }
-        .cp-hue-thumb { position: absolute; top: -4px; width: 22px; height: 36px; background: white; border: 2px solid #0f172a; border-radius: 6px; pointer-events: none; transform: translateX(-50%); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-        .cp-current-color { display: flex; align-items: center; gap: 10px; }
-        .cp-current-color input { flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 1rem; background: #f8fafc; color: #0f172a; text-align: center; min-width: 0; }
-        .cp-current-color input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-        .cp-copy-btn { padding: 10px 22px; background: #0f172a; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; flex-shrink: 0; }
-        .cp-copy-btn:hover { background: #1e293b; }
-        .cp-copy-btn.copied { background: #16a34a; }
-        .cp-presets { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-        .cp-preset-swatch { width: 36px; height: 36px; border-radius: 12px; border: 2px solid #e2e8f0; cursor: pointer; transition: transform 0.1s, border-color 0.2s; }
-        .cp-preset-swatch:hover { transform: scale(1.15); border-color: #0f172a; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.07);
+            padding: 30px;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 24px;
+        }
+        h2 img {
+            width: 1.3em;
+            height: 1.3em;
+        }
+
+        .color-picker-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .cp-sv-box {
+            width: 100%;
+            height: 220px;
+            border-radius: 12px;
+            position: relative;
+            cursor: crosshair;
+            touch-action: none;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .cp-sv-box canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .cp-sv-cursor {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .cp-hue-bar {
+            width: 100%;
+            height: 28px;
+            border-radius: 14px;
+            background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+            position: relative;
+            cursor: pointer;
+            touch-action: none;
+            border: 1px solid #e2e8f0;
+        }
+        .cp-hue-thumb {
+            position: absolute;
+            top: -4px;
+            width: 22px;
+            height: 36px;
+            background: white;
+            border: 2px solid #0f172a;
+            border-radius: 6px;
+            pointer-events: none;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+        }
+
+        .cp-current-color {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .cp-color-preview {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            flex-shrink: 0;
+            transition: background-color 0.15s ease;
+        }
+        .cp-current-color input {
+            flex: 1;
+            min-width: 90px;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            background: #f8fafc;
+            color: #0f172a;
+            text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .cp-current-color input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .cp-apply-btn {
+            padding: 10px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+        }
+        .cp-apply-btn:hover {
+            background: #2563eb;
+        }
+        .cp-apply-btn:active {
+            background: #1d4ed8;
+            transform: scale(0.97);
+        }
+        .cp-copy-btn {
+            padding: 10px 18px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+        }
+        .cp-copy-btn:hover {
+            background: #1e293b;
+        }
+        .cp-copy-btn.copied {
+            background: #16a34a;
+            transition: background 0.2s;
+        }
+
+        .cp-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .cp-preset-swatch {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .cp-preset-swatch:hover {
+            transform: scale(1.15);
+            border-color: #0f172a;
+        }
+        .cp-preset-swatch:active {
+            transform: scale(1.05);
+        }
 
         @media (max-width: 480px) {
-            .container { padding: 24px 20px; }
-            .cp-sv-box { height: 200px; }
+            .container {
+                padding: 24px 18px;
+            }
+            .cp-sv-box {
+                height: 200px;
+            }
+            .cp-current-color {
+                gap: 8px;
+            }
+            .cp-color-preview {
+                width: 38px;
+                height: 38px;
+                border-radius: 9px;
+            }
+            .cp-current-color input {
+                padding: 10px 10px;
+                font-size: 0.9rem;
+                min-width: 70px;
+            }
+            .cp-apply-btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+            }
+            .cp-copy-btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+            }
         }
     </style>
 </head>
@@ -40,7 +237,7 @@
             <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" alt=""> 颜色选择器
         </h2>
         <div class="color-picker-panel">
-            <div class="cp-sv-box">
+            <div class="cp-sv-box" id="svBox">
                 <canvas id="svCanvas"></canvas>
                 <div class="cp-sv-cursor" id="svCursor"></div>
             </div>
@@ -48,7 +245,9 @@
                 <div class="cp-hue-thumb" id="hueThumb"></div>
             </div>
             <div class="cp-current-color">
-                <input type="text" id="hexInput" value="#ff0000" readonly>
+                <span class="cp-color-preview" id="colorPreview" style="background-color:#ff0000;"></span>
+                <input type="text" id="hexInput" value="#ff0000">
+                <button class="cp-apply-btn" id="applyBtn">确定</button>
                 <button class="cp-copy-btn" id="copyBtn">复制</button>
             </div>
             <div class="cp-presets" id="presetsContainer"></div>
@@ -63,6 +262,7 @@
                 '#f43f5e', '#a855f7', '#0ea5e9', '#eab308'
             ];
 
+            // 渲染预设色块
             const presetsContainer = document.getElementById('presetsContainer');
             presetColors.forEach(color => {
                 const swatch = document.createElement('div');
@@ -77,35 +277,50 @@
                 presetsContainer.appendChild(swatch);
             });
 
+            // DOM 元素
+            const svBox = document.getElementById('svBox');
             const svCanvas = document.getElementById('svCanvas');
             const svCtx = svCanvas.getContext('2d');
             const svCursor = document.getElementById('svCursor');
             const hueBar = document.getElementById('hueBar');
             const hueThumb = document.getElementById('hueThumb');
             const hexInput = document.getElementById('hexInput');
+            const colorPreview = document.getElementById('colorPreview');
             const copyBtn = document.getElementById('copyBtn');
+            const applyBtn = document.getElementById('applyBtn');
 
-            let hue = 0, sat = 1, val = 1;
-            let draggingSv = false, draggingHue = false;
+            // HSV 状态
+            let hue = 0,
+                sat = 1,
+                val = 1;
+            let draggingSv = false,
+                draggingHue = false;
 
+            // --- Canvas 尺寸 ---
             function resizeCanvas() {
-                const rect = svCanvas.parentElement.getBoundingClientRect();
-                const w = rect.width || 280;
+                const parent = svCanvas.parentElement;
+                const w = parent.clientWidth || 280;
+                const h = parent.clientHeight || 220;
                 svCanvas.width = w;
-                svCanvas.height = 220;
+                svCanvas.height = h;
                 drawSv();
             }
 
+            // --- 绘制 SV 面板 ---
             function drawSv() {
-                const w = svCanvas.width, h = svCanvas.height;
+                const w = svCanvas.width,
+                    h = svCanvas.height;
                 svCtx.clearRect(0, 0, w, h);
+                // 色相层
                 svCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 svCtx.fillRect(0, 0, w, h);
+                // 白色渐变（左→右：白→透明）
                 const whiteGrad = svCtx.createLinearGradient(0, 0, w, 0);
                 whiteGrad.addColorStop(0, 'white');
                 whiteGrad.addColorStop(1, 'transparent');
                 svCtx.fillStyle = whiteGrad;
                 svCtx.fillRect(0, 0, w, h);
+                // 黑色渐变（上→下：透明→黑）
                 const blackGrad = svCtx.createLinearGradient(0, 0, 0, h);
                 blackGrad.addColorStop(0, 'transparent');
                 blackGrad.addColorStop(1, 'black');
@@ -115,8 +330,10 @@
             }
 
             function updateSvCursor() {
-                const w = svCanvas.width, h = svCanvas.height;
-                const x = sat * w, y = (1 - val) * h;
+                const w = svCanvas.width,
+                    h = svCanvas.height;
+                const x = sat * w,
+                    y = (1 - val) * h;
                 svCursor.style.left = x + 'px';
                 svCursor.style.top = y + 'px';
             }
@@ -127,6 +344,7 @@
                 hueThumb.style.left = x + 'px';
             }
 
+            // --- 色相条交互 ---
             function setHueFromPos(clientX) {
                 const rect = hueBar.getBoundingClientRect();
                 const barWidth = rect.width;
@@ -138,10 +356,13 @@
                 applyColor();
             }
 
+            // --- SV 面板交互 ---
             function setSvFromPos(clientX, clientY) {
-                const rect = svCanvas.parentElement.getBoundingClientRect();
-                const w = rect.width, h = rect.height;
-                let x = clientX - rect.left, y = clientY - rect.top;
+                const rect = svBox.getBoundingClientRect();
+                const w = rect.width,
+                    h = rect.height;
+                let x = clientX - rect.left,
+                    y = clientY - rect.top;
                 x = Math.max(0, Math.min(w, x));
                 y = Math.max(0, Math.min(h, y));
                 sat = x / w;
@@ -150,17 +371,45 @@
                 applyColor();
             }
 
+            // --- 颜色转换 ---
             function hsvToRgb(h, s, v) {
                 let r, g, b;
-                const i = Math.floor(h / 60), f = h / 60 - i;
-                const p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+                const i = Math.floor(h / 60),
+                    f = h / 60 - i;
+                const p = v * (1 - s),
+                    q = v * (1 - f * s),
+                    t = v * (1 - (1 - f) * s);
                 switch (i % 6) {
-                    case 0: r = v; g = t; b = p; break;
-                    case 1: r = q; g = v; b = p; break;
-                    case 2: r = p; g = v; b = t; break;
-                    case 3: r = p; g = q; b = v; break;
-                    case 4: r = t; g = p; b = v; break;
-                    case 5: r = v; g = p; b = q; break;
+                    case 0:
+                        r = v;
+                        g = t;
+                        b = p;
+                        break;
+                    case 1:
+                        r = q;
+                        g = v;
+                        b = p;
+                        break;
+                    case 2:
+                        r = p;
+                        g = v;
+                        b = t;
+                        break;
+                    case 3:
+                        r = p;
+                        g = q;
+                        b = v;
+                        break;
+                    case 4:
+                        r = t;
+                        g = p;
+                        b = v;
+                        break;
+                    case 5:
+                        r = v;
+                        g = p;
+                        b = q;
+                        break;
                 }
                 return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
             }
@@ -170,50 +419,166 @@
                 return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
             }
 
-            function applyColor() {
-                hexInput.value = getCurrentHex();
+            function rgbToHsv(r, g, b) {
+                const rr = r / 255,
+                    gg = g / 255,
+                    bb = b / 255;
+                const max = Math.max(rr, gg, bb),
+                    min = Math.min(rr, gg, bb);
+                let h = 0,
+                    s,
+                    v = max;
+                const d = max - min;
+                s = max === 0 ? 0 : d / max;
+                if (d !== 0) {
+                    if (max === rr) {
+                        h = ((gg - bb) / d + (gg < bb ? 6 : 0)) * 60;
+                    } else if (max === gg) {
+                        h = ((bb - rr) / d + 2) * 60;
+                    } else {
+                        h = ((rr - gg) / d + 4) * 60;
+                    }
+                }
+                return [h, s, v];
             }
 
+            // --- 应用颜色到界面 ---
+            function applyColor() {
+                const hex = getCurrentHex();
+                // 如果用户正在手动输入，不要覆盖输入框
+                if (document.activeElement !== hexInput) {
+                    hexInput.value = hex;
+                }
+                colorPreview.style.backgroundColor = hex;
+            }
+
+            function updateDisplayForce() {
+                const hex = getCurrentHex();
+                hexInput.value = hex;
+                colorPreview.style.backgroundColor = hex;
+            }
+
+            // --- 从 hex 设置颜色 ---
             function setColorFromHex(hex) {
                 hex = hex.trim();
+                if (/^#([0-9a-fA-F]{3})$/.test(hex)) {
+                    // 展开3位hex
+                    hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+                }
                 if (/^#([0-9a-fA-F]{6})$/.test(hex)) {
                     const r = parseInt(hex.slice(1, 3), 16);
                     const g = parseInt(hex.slice(3, 5), 16);
                     const b = parseInt(hex.slice(5, 7), 16);
-                    const rr = r / 255, gg = g / 255, bb = b / 255;
-                    const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
-                    val = max;
-                    const d = max - min;
-                    sat = max === 0 ? 0 : d / max;
-                    if (d !== 0) {
-                        if (max === rr) {
-                            hue = ((gg - bb) / d + (gg < bb ? 6 : 0)) * 60;
-                        } else if (max === gg) {
-                            hue = ((bb - rr) / d + 2) * 60;
-                        } else {
-                            hue = ((rr - gg) / d + 4) * 60;
-                        }
-                    } else {
-                        hue = 0;
-                    }
+                    const [h, s, v] = rgbToHsv(r, g, b);
+                    hue = h;
+                    sat = s;
+                    val = v;
                 } else {
-                    hue = 0; sat = 1; val = 1;
+                    hue = 0;
+                    sat = 1;
+                    val = 1;
                 }
                 drawSv();
                 updateHueThumb();
-                applyColor();
+                updateDisplayForce();
             }
 
-            svCanvas.parentElement.addEventListener('mousedown', e => { e.preventDefault(); draggingSv = true; setSvFromPos(e.clientX, e.clientY); });
-            svCanvas.parentElement.addEventListener('touchstart', e => { e.preventDefault(); draggingSv = true; setSvFromPos(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-            hueBar.addEventListener('mousedown', e => { e.preventDefault(); draggingHue = true; setHueFromPos(e.clientX); });
-            hueBar.addEventListener('touchstart', e => { e.preventDefault(); draggingHue = true; setHueFromPos(e.touches[0].clientX); }, { passive: false });
+            // --- 事件绑定 ---
+            svBox.addEventListener('mousedown', e => {
+                e.preventDefault();
+                draggingSv = true;
+                setSvFromPos(e.clientX, e.clientY);
+            });
+            svBox.addEventListener('touchstart', e => {
+                e.preventDefault();
+                draggingSv = true;
+                setSvFromPos(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
 
-            document.addEventListener('mousemove', e => { if (draggingSv) setSvFromPos(e.clientX, e.clientY); if (draggingHue) setHueFromPos(e.clientX); });
-            document.addEventListener('touchmove', e => { if (draggingSv) setSvFromPos(e.touches[0].clientX, e.touches[0].clientY); if (draggingHue) setHueFromPos(e.touches[0].clientX); }, { passive: false });
-            document.addEventListener('mouseup', () => { draggingSv = false; draggingHue = false; });
-            document.addEventListener('touchend', () => { draggingSv = false; draggingHue = false; });
+            hueBar.addEventListener('mousedown', e => {
+                e.preventDefault();
+                draggingHue = true;
+                setHueFromPos(e.clientX);
+            });
+            hueBar.addEventListener('touchstart', e => {
+                e.preventDefault();
+                draggingHue = true;
+                setHueFromPos(e.touches[0].clientX);
+            }, { passive: false });
 
+            document.addEventListener('mousemove', e => {
+                if (draggingSv) setSvFromPos(e.clientX, e.clientY);
+                if (draggingHue) setHueFromPos(e.clientX);
+            });
+            document.addEventListener('touchmove', e => {
+                if (draggingSv) setSvFromPos(e.touches[0].clientX, e.touches[0].clientY);
+                if (draggingHue) setHueFromPos(e.touches[0].clientX);
+            }, { passive: false });
+
+            document.addEventListener('mouseup', () => {
+                draggingSv = false;
+                draggingHue = false;
+            });
+            document.addEventListener('touchend', () => {
+                draggingSv = false;
+                draggingHue = false;
+            });
+
+            // --- 输入框实时预览 ---
+            hexInput.addEventListener('input', () => {
+                let val = hexInput.value.trim();
+                if (/^#([0-9a-fA-F]{3})$/.test(val)) {
+                    const expanded = '#' + val[1] + val[1] + val[2] + val[2] + val[3] + val[3];
+                    colorPreview.style.backgroundColor = expanded;
+                } else if (/^#([0-9a-fA-F]{6})$/.test(val)) {
+                    colorPreview.style.backgroundColor = val.toLowerCase();
+                }
+                // 无效输入不更新预览块
+            });
+
+            // --- 回车键触发确定 ---
+            hexInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyBtn.click();
+                }
+            });
+
+            // --- 确定按钮 ---
+            applyBtn.addEventListener('click', () => {
+                let hex = hexInput.value.trim();
+                // 尝试匹配并展开3位hex
+                if (/^#([0-9a-fA-F]{3})$/.test(hex)) {
+                    hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+                }
+                if (/^#([0-9a-fA-F]{6})$/.test(hex)) {
+                    // 有效颜色 → 同步到面板
+                    hex = hex.toLowerCase();
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    const [h, s, v] = rgbToHsv(r, g, b);
+                    hue = h;
+                    sat = s;
+                    val = v;
+                    drawSv();
+                    updateHueThumb();
+                    hexInput.value = hex;
+                    colorPreview.style.backgroundColor = hex;
+                } else {
+                    // 无效颜色 → 恢复到当前面板颜色
+                    const curHex = getCurrentHex();
+                    hexInput.value = curHex;
+                    colorPreview.style.backgroundColor = curHex;
+                    // 短暂闪烁提示
+                    hexInput.style.borderColor = '#ef4444';
+                    setTimeout(() => {
+                        hexInput.style.borderColor = '#e2e8f0';
+                    }, 400);
+                }
+            });
+
+            // --- 复制按钮 ---
             copyBtn.addEventListener('click', () => {
                 const hex = hexInput.value;
                 navigator.clipboard.writeText(hex).then(() => {
@@ -241,8 +606,10 @@
                 });
             });
 
+            // --- 窗口大小变化 ---
             window.addEventListener('resize', resizeCanvas);
 
+            // --- 初始化 ---
             resizeCanvas();
             applyColor();
         })();
