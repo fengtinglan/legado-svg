@@ -54,89 +54,88 @@
     let isTccolorModalOpen = false;
 
     function createTccolorModal() {
-    tccolorModalOverlay = document.createElement('div');
-    tccolorModalOverlay.className = 'help-modal-overlay';
-    tccolorModalOverlay.style.zIndex = '10005';
-    document.body.appendChild(tccolorModalOverlay);
+        tccolorModalOverlay = document.createElement('div');
+        tccolorModalOverlay.className = 'help-modal-overlay';
+        tccolorModalOverlay.style.zIndex = '10005';
+        document.body.appendChild(tccolorModalOverlay);
 
-    tccolorModal = document.createElement('div');
-    tccolorModal.className = 'help-modal';
-    tccolorModal.style.maxWidth = '480px';
-    tccolorModal.innerHTML = `
-        <div class="help-modal-header">
-            <h2>🎨 选择 $tccolor 形状</h2>
-            <button class="help-modal-close" id="tccolorModalCloseBtn">&times;</button>
-        </div>
-        <div class="help-modal-body">
-            <p style="margin-bottom:12px;">请至少选择一个形状区域使用 <strong>$tccolor</strong> 变量（勾选后预览图将显示斜线标记）：</p>
-            <div id="tccolorCheckContainer" style="max-height: 100px; overflow-y: auto;"></div>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-                <button id="tccolorSelectAllBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">全选</button>
-                <button id="tccolorConfirmBtn" class="btn-apply" style="padding:8px 20px;">确认</button>
-                <button id="tccolorCancelBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">取消</button>
+        tccolorModal = document.createElement('div');
+        tccolorModal.className = 'help-modal';
+        tccolorModal.style.maxWidth = '480px';
+        tccolorModal.innerHTML = `
+            <div class="help-modal-header">
+                <h2>🎨 选择 $tccolor 形状</h2>
+                <button class="help-modal-close" id="tccolorModalCloseBtn">&times;</button>
             </div>
-        </div>
-    `;
-    tccolorModalOverlay.appendChild(tccolorModal);
+            <div class="help-modal-body">
+                <p style="margin-bottom:12px;">请至少选择一个形状区域使用 <strong>$tccolor</strong> 变量（勾选后预览图将显示斜线标记）：</p>
+                <div id="tccolorCheckContainer" style="max-height: 100px; overflow-y: auto;"></div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                    <button id="tccolorSelectAllBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">全选</button>
+                    <button id="tccolorConfirmBtn" class="btn-apply" style="padding:8px 20px;">确认</button>
+                    <button id="tccolorCancelBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">取消</button>
+                </div>
+            </div>
+        `;
+        tccolorModalOverlay.appendChild(tccolorModal);
 
-    tccolorCheckContainer = tccolorModal.querySelector('#tccolorCheckContainer');
-    tccolorConfirmBtn = tccolorModal.querySelector('#tccolorConfirmBtn');
-    tccolorCancelBtn = tccolorModal.querySelector('#tccolorCancelBtn');
-    tccolorCloseBtn = tccolorModal.querySelector('#tccolorModalCloseBtn');
+        tccolorCheckContainer = tccolorModal.querySelector('#tccolorCheckContainer');
+        tccolorConfirmBtn = tccolorModal.querySelector('#tccolorConfirmBtn');
+        tccolorCancelBtn = tccolorModal.querySelector('#tccolorCancelBtn');
+        tccolorCloseBtn = tccolorModal.querySelector('#tccolorModalCloseBtn');
 
-    tccolorConfirmBtn.addEventListener('click', onTccolorConfirm);
-    tccolorCancelBtn.addEventListener('click', onTccolorCancel);
-    tccolorCloseBtn.addEventListener('click', onTccolorCancel);
-    tccolorModalOverlay.addEventListener('click', e => {
-        if (e.target === tccolorModalOverlay) onTccolorCancel();
-    });
-}
-
-function openTccolorModal() {
-    const shapeCount = shapeFillInputs.length;
-    if (shapeCount === 0) {
-        showToast('没有可选的形状区域', 'error');
-        return;
-    }
-    _backupSelectedTccolorIndices = [...selectedTccolorIndices];
-    tccolorCheckContainer.innerHTML = '';
-    for (let i = 0; i < shapeCount; i++) {
-        const row = document.createElement('div');
-        row.className = 'kv-row';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.className = 'tccolor-check-item';
-        cb.value = i;
-        cb.checked = selectedTccolorIndices.includes(i);
-        const label = document.createElement('span');
-        label.textContent = `区域 ${i + 1} (当前颜色: ${shapeFillInputs[i].value})`;
-        row.appendChild(cb);
-        row.appendChild(label);
-        tccolorCheckContainer.appendChild(row);
-        cb.addEventListener('change', () => {
-            const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
-            selectedTccolorIndices = allCbs.filter(c => c.checked).map(c => parseInt(c.value));
-            updateBubblePreview();
+        tccolorConfirmBtn.addEventListener('click', onTccolorConfirm);
+        tccolorCancelBtn.addEventListener('click', onTccolorCancel);
+        tccolorCloseBtn.addEventListener('click', onTccolorCancel);
+        tccolorModalOverlay.addEventListener('click', e => {
+            if (e.target === tccolorModalOverlay) onTccolorCancel();
         });
     }
 
-    // 绑定全选按钮事件
-    const selectAllBtn = tccolorModal.querySelector('#tccolorSelectAllBtn');
-    if (selectAllBtn) {
-        selectAllBtn.onclick = () => {
-            const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
-            // 检查当前是否所有复选框都已选中
-            const allChecked = allCbs.every(cb => cb.checked);
-            allCbs.forEach(cb => { cb.checked = !allChecked; });
-            selectedTccolorIndices = allChecked ? [] : allCbs.map(cb => parseInt(cb.value));
-            selectAllBtn.textContent = allChecked ? '全选' : '取消全选';
-            updateBubblePreview();
-        };
+    function openTccolorModal() {
+        const shapeCount = shapeFillInputs.length;
+        if (shapeCount === 0) {
+            showToast('没有可选的形状区域', 'error');
+            return;
+        }
+        _backupSelectedTccolorIndices = [...selectedTccolorIndices];
+        tccolorCheckContainer.innerHTML = '';
+        for (let i = 0; i < shapeCount; i++) {
+            const row = document.createElement('div');
+            row.className = 'kv-row';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'tccolor-check-item';
+            cb.value = i;
+            cb.checked = selectedTccolorIndices.includes(i);
+            const label = document.createElement('span');
+            label.textContent = `区域 ${i + 1} (当前颜色: ${shapeFillInputs[i].value})`;
+            row.appendChild(cb);
+            row.appendChild(label);
+            tccolorCheckContainer.appendChild(row);
+            cb.addEventListener('change', () => {
+                const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
+                selectedTccolorIndices = allCbs.filter(c => c.checked).map(c => parseInt(c.value));
+                updateBubblePreview();
+            });
+        }
+
+        const selectAllBtn = tccolorModal.querySelector('#tccolorSelectAllBtn');
+        if (selectAllBtn) {
+            selectAllBtn.onclick = () => {
+                const allCbs = Array.from(tccolorCheckContainer.querySelectorAll('.tccolor-check-item'));
+                const allChecked = allCbs.every(cb => cb.checked);
+                allCbs.forEach(cb => { cb.checked = !allChecked; });
+                selectedTccolorIndices = allChecked ? [] : allCbs.map(cb => parseInt(cb.value));
+                selectAllBtn.textContent = allChecked ? '全选' : '取消全选';
+                updateBubblePreview();
+            };
+        }
+
+        isTccolorModalOpen = true;
+        tccolorModalOverlay.classList.add('active');
     }
 
-    isTccolorModalOpen = true;
-    tccolorModalOverlay.classList.add('active');
-}
     function closeTccolorModal() {
         isTccolorModalOpen = false;
         tccolorModalOverlay.classList.remove('active');
@@ -197,116 +196,179 @@ function openTccolorModal() {
 
     const TEXT_EXTENSIONS = new Set(['svg','txt','html','htm','xml','css','js','json','md','ts','jsx','tsx','vue','svelte']);
 
-    const colorPicker = {
-        panel: null, overlay: null, svCanvas: null, svCtx: null, svCursor: null,
-        hueBar: null, hueThumb: null, currentInput: null, copyBtn: null,
-        targetPreview: null, targetInput: null, hue: 0, sat: 1, val: 1,
-        active: false, draggingSv: false, draggingHue: false, independentMode: false,
-        init() {
-            this.overlay = document.createElement('div');
-            this.overlay.className = 'color-picker-overlay';
-            document.body.appendChild(this.overlay);
-            this.overlay.addEventListener('click', () => this.close());
+const colorPicker = {
+    panel: null, overlay: null, svCanvas: null, svCtx: null, svCursor: null,
+    hueBar: null, hueThumb: null, currentInput: null, copyBtn: null,
+    targetPreview: null, targetInput: null, hue: 0, sat: 1, val: 1,
+    active: false, draggingSv: false, draggingHue: false, independentMode: false,
+    confirmBtn: null,
+    init() {
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'color-picker-overlay';
+        document.body.appendChild(this.overlay);
+        this.overlay.addEventListener('click', () => this.close());
 
-            this.panel = document.createElement('div');
-            this.panel.className = 'color-picker-panel';
-            this.panel.innerHTML = `
-                <div class="cp-sv-box"><canvas></canvas><div class="cp-sv-cursor"></div></div>
-                <div class="cp-hue-bar"><div class="cp-hue-thumb"></div></div>
-                <div class="cp-current-color">
-                    <input type="text" class="cp-current-input" value="#ff0000" readonly>
-                    <button class="cp-copy-btn">复制</button>
-                </div>
-                <div class="cp-presets">
-                    <div class="cp-preset-swatch" style="background:#000000" data-color="#000000"></div>
-                    <div class="cp-preset-swatch" style="background:#ffffff" data-color="#ffffff"></div>
-                    <div class="cp-preset-swatch" style="background:#ef4444" data-color="#ef4444"></div>
-                    <div class="cp-preset-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
-                    <div class="cp-preset-swatch" style="background:#10b981" data-color="#10b981"></div>
-                    <div class="cp-preset-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
-                </div>
-                <div class="cp-actions">
-                    <button class="cp-btn-close">关闭</button>
-                </div>
-            `;
-            document.body.appendChild(this.panel);
+        this.panel = document.createElement('div');
+        this.panel.className = 'color-picker-panel';
+        this.panel.innerHTML = `
+            <div class="cp-sv-box"><canvas></canvas><div class="cp-sv-cursor"></div></div>
+            <div class="cp-hue-bar"><div class="cp-hue-thumb"></div></div>
+            <div class="cp-current-color">
+                <span class="color-preview" id="cpPreview" style="background-color:#ff0000;"></span>
+                <input type="text" class="cp-current-input" value="#ff0000">
+                <button class="cp-copy-btn">复制</button>
+                <button class="cp-apply-btn" style="margin-left:4px; padding:10px 14px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">确定</button>
+            </div>
+            <div class="cp-presets">
+                <div class="cp-preset-swatch" style="background:#000000" data-color="#000000"></div>
+                <div class="cp-preset-swatch" style="background:#ffffff" data-color="#ffffff"></div>
+                <div class="cp-preset-swatch" style="background:#ef4444" data-color="#ef4444"></div>
+                <div class="cp-preset-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
+                <div class="cp-preset-swatch" style="background:#10b981" data-color="#10b981"></div>
+                <div class="cp-preset-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
+            </div>
+            <div class="cp-actions">
+                <button class="cp-btn-close">关闭</button>
+            </div>
+        `;
+        document.body.appendChild(this.panel);
 
-            this.svCanvas = this.panel.querySelector('canvas');
-            this.svCtx = this.svCanvas.getContext('2d');
-            this.svCursor = this.panel.querySelector('.cp-sv-cursor');
-            this.hueBar = this.panel.querySelector('.cp-hue-bar');
-            this.hueThumb = this.panel.querySelector('.cp-hue-thumb');
-            this.currentInput = this.panel.querySelector('.cp-current-input');
-            this.copyBtn = this.panel.querySelector('.cp-copy-btn');
-            const presets = this.panel.querySelectorAll('.cp-preset-swatch');
+        this.svCanvas = this.panel.querySelector('canvas');
+        this.svCtx = this.svCanvas.getContext('2d');
+        this.svCursor = this.panel.querySelector('.cp-sv-cursor');
+        this.hueBar = this.panel.querySelector('.cp-hue-bar');
+        this.hueThumb = this.panel.querySelector('.cp-hue-thumb');
+        this.currentInput = this.panel.querySelector('.cp-current-input');
+        this.copyBtn = this.panel.querySelector('.cp-copy-btn');
+        this.cpPreview = this.panel.querySelector('#cpPreview');
+        this.confirmBtn = this.panel.querySelector('.cp-apply-btn');
+        const presets = this.panel.querySelectorAll('.cp-preset-swatch');
 
-            const svBox = this.panel.querySelector('.cp-sv-box');
-            svBox.addEventListener('mousedown', e => this.startSv(e));
-            svBox.addEventListener('touchstart', e => this.startSv(e), { passive: false });
-            this.hueBar.addEventListener('mousedown', e => this.startHue(e));
-            this.hueBar.addEventListener('touchstart', e => this.startHue(e), { passive: false });
+        const svBox = this.panel.querySelector('.cp-sv-box');
+        svBox.addEventListener('mousedown', e => this.startSv(e));
+        svBox.addEventListener('touchstart', e => this.startSv(e), { passive: false });
+        this.hueBar.addEventListener('mousedown', e => this.startHue(e));
+        this.hueBar.addEventListener('touchstart', e => this.startHue(e), { passive: false });
 
-            presets.forEach(el => {
-                el.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const color = el.dataset.color;
-                    if (this.targetInput && !this.independentMode) {
-                        this.targetInput.value = color;
-                        this.syncPreview();
-                        if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
-                            updateBubblePreview();
-                        }
-                        updateVariableStyle(this.targetInput);
-                        updateVariableLabel(this.targetInput);
-                    }
-                    this.currentInput.value = color;
-                    this.applyColorToTarget();
-                    this.close();
-                });
-            });
+        // 确定按钮：应用输入框中的颜色
+        this.confirmBtn.addEventListener('click', () => {
+            const hex = this.currentInput.value.trim();
+            if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) {
+                let fullHex = hex;
+                if (hex.length === 4) {
+                    fullHex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+                }
+                this.currentInput.value = fullHex;
+                this.cpPreview.style.backgroundColor = fullHex;
+                const [r, g, b] = this.hexToRgb(fullHex);
+                const [h, s, v] = this.rgbToHsv(r, g, b);
+                this.hue = h;
+                this.sat = s;
+                this.val = v;
+                this.drawSv();
+                this.updateHueThumb();
+                this.applyColorToTarget();
+            } else {
+                const curColor = this.getCurrentColor();
+                this.currentInput.value = curColor;
+                this.cpPreview.style.backgroundColor = curColor;
+                this.applyColorToTarget();
+            }
+        });
 
-            this.copyBtn.addEventListener('click', e => {
+        presets.forEach(el => {
+            el.addEventListener('click', e => {
                 e.stopPropagation();
-                const val = this.currentInput.value;
-                copyText(val, `已复制颜色 ${val}`);
+                const color = el.dataset.color;
+                if (this.targetInput && !this.independentMode) {
+                    this.targetInput.value = color;
+                    this.syncPreview();
+                    if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                        updateBubblePreview();
+                    }
+                    updateVariableStyle(this.targetInput);
+                    updateVariableLabel(this.targetInput);
+                }
+                this.currentInput.value = color;
+                this.cpPreview.style.backgroundColor = color;
+                this.applyColorToTarget();
+                this.close();
             });
+        });
 
-            this.panel.querySelector('.cp-btn-close').addEventListener('click', () => this.close());
+        this.copyBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            const val = this.currentInput.value;
+            copyText(val, `已复制颜色 ${val}`);
+        });
 
-            document.addEventListener('mousemove', e => this.moveSv(e));
-            document.addEventListener('mouseup', () => this.endSv());
-            document.addEventListener('touchmove', e => this.moveSv(e), { passive: false });
-            document.addEventListener('touchend', () => this.endSv());
-            document.addEventListener('mousemove', e => this.moveHue(e));
-            document.addEventListener('mouseup', () => this.endHue());
-            document.addEventListener('touchmove', e => this.moveHue(e), { passive: false });
-            document.addEventListener('touchend', () => this.endHue());
+        this.panel.querySelector('.cp-btn-close').addEventListener('click', () => this.close());
 
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
-        },
-        resizeCanvas() { if (!this.svCanvas) return; const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width || 280; this.svCanvas.width = w; this.svCanvas.height = 200; this.drawSv(); },
-        drawSv() { const ctx = this.svCtx, w = this.svCanvas.width, h = this.svCanvas.height; ctx.clearRect(0,0,w,h); ctx.fillStyle = `hsl(${this.hue},100%,50%)`; ctx.fillRect(0,0,w,h); const whiteGrad = ctx.createLinearGradient(0,0,w,0); whiteGrad.addColorStop(0,'white'); whiteGrad.addColorStop(1,'transparent'); ctx.fillStyle = whiteGrad; ctx.fillRect(0,0,w,h); const blackGrad = ctx.createLinearGradient(0,0,0,h); blackGrad.addColorStop(0,'transparent'); blackGrad.addColorStop(1,'black'); ctx.fillStyle = blackGrad; ctx.fillRect(0,0,w,h); this.updateSvCursor(); },
-        updateSvCursor() { const w = this.svCanvas.width, h = this.svCanvas.height; const x = this.sat * w, y = (1-this.val) * h; this.svCursor.style.left = x+'px'; this.svCursor.style.top = y+'px'; },
-        updateHueThumb() { const barWidth = this.hueBar.clientWidth; const x = (this.hue/360) * barWidth; this.hueThumb.style.left = x+'px'; },
-        setHueFromPos(clientX) { const rect = this.hueBar.getBoundingClientRect(); const barWidth = rect.width; let x = clientX - rect.left; x = Math.max(0, Math.min(barWidth, x)); this.hue = (x/barWidth)*360; this.drawSv(); this.updateHueThumb(); this.applyColorToTarget(); },
-        setSvFromPos(clientX, clientY) { const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width, h = rect.height; let x = clientX - rect.left, y = clientY - rect.top; x = Math.max(0, Math.min(w, x)); y = Math.max(0, Math.min(h, y)); this.sat = x/w; this.val = 1 - y/h; this.updateSvCursor(); this.applyColorToTarget(); },
-        startSv(e) { e.preventDefault(); this.draggingSv = true; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
-        moveSv(e) { if (!this.draggingSv) return; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
-        endSv() { this.draggingSv = false; },
-        startHue(e) { e.preventDefault(); this.draggingHue = true; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
-        moveHue(e) { if (!this.draggingHue) return; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
-        endHue() { this.draggingHue = false; },
-        getCurrentColor() { const [r,g,b] = this.hsvToRgb(this.hue, this.sat, this.val); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); },
-        hsvToRgb(h,s,v) { let r,g,b; const i=Math.floor(h/60), f=h/60-i; const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s); switch(i%6) { case 0: r=v;g=t;b=p; break; case 1: r=q;g=v;b=p; break; case 2: r=p;g=v;b=t; break; case 3: r=p;g=q;b=v; break; case 4: r=t;g=p;b=v; break; case 5: r=v;g=p;b=q; break; } return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; },
-        applyColorToTarget() { const color = this.getCurrentColor(); this.currentInput.value = color; if (!this.independentMode && this.targetInput) { this.targetInput.value = color; this.syncPreview(); if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) { updateBubblePreview(); } updateVariableStyle(this.targetInput); updateVariableLabel(this.targetInput); } },
-        syncPreview() { if (this.targetPreview && this.targetInput) { const val = this.targetInput.value.trim(); if (/^#([0-9a-fA-F]{3,8})$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val==='transparent') this.targetPreview.style.backgroundColor = val; else this.targetPreview.style.backgroundColor = '#ccc'; } },
-        open(previewEl, inputEl, independent = false) { this.targetPreview = previewEl; this.targetInput = inputEl; this.independentMode = independent; const color = (inputEl && !independent) ? inputEl.value.trim() : this.currentInput.value; if (/^#([0-9a-fA-F]{6})$/.test(color)) { const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)]; const hsv = this.rgbToHsv(r,g,b); this.hue = hsv[0]; this.sat = hsv[1]; this.val = hsv[2]; } else { this.hue = 0; this.sat = 1; this.val = 1; } this.drawSv(); this.updateHueThumb(); this.currentInput.value = this.getCurrentColor(); this.overlay.classList.add('active'); this.panel.classList.add('active'); this.active = true; },
-        close() { this.overlay.classList.remove('active'); this.panel.classList.remove('active'); this.active = false; },
-        hexToRgb(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; },
-        rgbToHsv(r,g,b) { r/=255;g/=255;b/=255; const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s,v=max; const d=max-min; s=max===0?0:d/max; if(d!==0) { switch(max) { case r: h=((g-b)/d+(g<b?6:0))*60; break; case g: h=((b-r)/d+2)*60; break; case b: h=((r-g)/d+4)*60; break; } } return [h,s,v]; }
-    };
-    colorPicker.init();
+        document.addEventListener('mousemove', e => this.moveSv(e));
+        document.addEventListener('mouseup', () => this.endSv());
+        document.addEventListener('touchmove', e => this.moveSv(e), { passive: false });
+        document.addEventListener('touchend', () => this.endSv());
+        document.addEventListener('mousemove', e => this.moveHue(e));
+        document.addEventListener('mouseup', () => this.endHue());
+        document.addEventListener('touchmove', e => this.moveHue(e), { passive: false });
+        document.addEventListener('touchend', () => this.endHue());
+
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+    },
+    resizeCanvas() { if (!this.svCanvas) return; const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width || 280; this.svCanvas.width = w; this.svCanvas.height = 200; this.drawSv(); },
+    drawSv() { const ctx = this.svCtx, w = this.svCanvas.width, h = this.svCanvas.height; ctx.clearRect(0,0,w,h); ctx.fillStyle = `hsl(${this.hue},100%,50%)`; ctx.fillRect(0,0,w,h); const whiteGrad = ctx.createLinearGradient(0,0,w,0); whiteGrad.addColorStop(0,'white'); whiteGrad.addColorStop(1,'transparent'); ctx.fillStyle = whiteGrad; ctx.fillRect(0,0,w,h); const blackGrad = ctx.createLinearGradient(0,0,0,h); blackGrad.addColorStop(0,'transparent'); blackGrad.addColorStop(1,'black'); ctx.fillStyle = blackGrad; ctx.fillRect(0,0,w,h); this.updateSvCursor(); },
+    updateSvCursor() { const w = this.svCanvas.width, h = this.svCanvas.height; const x = this.sat * w, y = (1-this.val) * h; this.svCursor.style.left = x+'px'; this.svCursor.style.top = y+'px'; },
+    updateHueThumb() { const barWidth = this.hueBar.clientWidth; const x = (this.hue/360) * barWidth; this.hueThumb.style.left = x+'px'; },
+    setHueFromPos(clientX) { const rect = this.hueBar.getBoundingClientRect(); const barWidth = rect.width; let x = clientX - rect.left; x = Math.max(0, Math.min(barWidth, x)); this.hue = (x/barWidth)*360; this.drawSv(); this.updateHueThumb(); this.applyColorToTarget(); },
+    setSvFromPos(clientX, clientY) { const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width, h = rect.height; let x = clientX - rect.left, y = clientY - rect.top; x = Math.max(0, Math.min(w, x)); y = Math.max(0, Math.min(h, y)); this.sat = x/w; this.val = 1 - y/h; this.updateSvCursor(); this.applyColorToTarget(); },
+    startSv(e) { e.preventDefault(); this.draggingSv = true; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
+    moveSv(e) { if (!this.draggingSv) return; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
+    endSv() { this.draggingSv = false; },
+    startHue(e) { e.preventDefault(); this.draggingHue = true; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
+    moveHue(e) { if (!this.draggingHue) return; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
+    endHue() { this.draggingHue = false; },
+    getCurrentColor() { const [r,g,b] = this.hsvToRgb(this.hue, this.sat, this.val); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); },
+    hsvToRgb(h,s,v) { let r,g,b; const i=Math.floor(h/60), f=h/60-i; const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s); switch(i%6) { case 0: r=v;g=t;b=p; break; case 1: r=q;g=v;b=p; break; case 2: r=p;g=v;b=t; break; case 3: r=p;g=q;b=v; break; case 4: r=t;g=p;b=v; break; case 5: r=v;g=p;b=q; break; } return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; },
+    applyColorToTarget() {
+        const color = this.getCurrentColor();
+        if (document.activeElement !== this.currentInput) {
+            this.currentInput.value = color;
+            this.cpPreview.style.backgroundColor = color;
+        }
+        if (!this.independentMode && this.targetInput) {
+            this.targetInput.value = color;
+            this.syncPreview();
+            if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                updateBubblePreview();
+            }
+            updateVariableStyle(this.targetInput);
+            updateVariableLabel(this.targetInput);
+        }
+    },
+    syncPreview() { if (this.targetPreview && this.targetInput) { const val = this.targetInput.value.trim(); if (/^#([0-9a-fA-F]{3,8})$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val==='transparent') this.targetPreview.style.backgroundColor = val; else this.targetPreview.style.backgroundColor = '#ccc'; } },
+    open(previewEl, inputEl, independent = false) {
+        this.targetPreview = previewEl; this.targetInput = inputEl; this.independentMode = independent;
+        const color = (inputEl && !independent) ? inputEl.value.trim() : this.currentInput.value;
+        if (/^#([0-9a-fA-F]{6})$/.test(color)) {
+            const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
+            const hsv = this.rgbToHsv(r,g,b);
+            this.hue = hsv[0]; this.sat = hsv[1]; this.val = hsv[2];
+        } else { this.hue = 0; this.sat = 1; this.val = 1; }
+        this.drawSv();
+        this.updateHueThumb();
+        const curColor = this.getCurrentColor();
+        this.currentInput.value = curColor;
+        this.cpPreview.style.backgroundColor = curColor;
+        this.overlay.classList.add('active');
+        this.panel.classList.add('active');
+        this.active = true;
+    },
+    close() { this.overlay.classList.remove('active'); this.panel.classList.remove('active'); this.active = false; },
+    hexToRgb(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; },
+    rgbToHsv(r,g,b) { r/=255;g/=255;b/=255; const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s,v=max; const d=max-min; s=max===0?0:d/max; if(d!==0) { switch(max) { case r: h=((g-b)/d+(g<b?6:0))*60; break; case g: h=((b-r)/d+2)*60; break; case b: h=((r-g)/d+4)*60; break; } } return [h,s,v]; }
+};
+colorPicker.init();
 
     [strokeColorPicker, fillColorPicker, $('bgColorPicker'), $('replaceColorPicker')].forEach(p => { if(p) p.style.display='none'; });
 
@@ -490,7 +552,7 @@ function openTccolorModal() {
     uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (currentInputMode === 'upload' && e.dataTransfer.files[0]) readFileAndPopulate(e.dataTransfer.files[0]); });
     function loadImageAsBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
     function getImageDimensions(base64) { return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight }); img.onerror = reject; img.src = base64; }); }
-    async function createImageBubble(base64) { try { const dims = await getImageDimensions(base64); const w = dims.width; const h = dims.height; const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('xmlns', svgNS); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', w); svg.setAttribute('height', h); const image = document.createElementNS(svgNS, 'image'); image.setAttribute('x', '0'); image.setAttribute('y', '0'); image.setAttribute('width', w); image.setAttribute('height', h); image.setAttribute('href', base64); svg.appendChild(image); const text = document.createElementNS(svgNS, 'text'); text.setAttribute('x', w / 2); text.setAttribute('y', h / 2 + 30); text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle'); text.setAttribute('font-size', Math.max(16, Math.round(h / 10))); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-weight', 'bold'); text.setAttribute('fill', '#d500ff'); text.textContent = '数量'; svg.appendChild(text); const serializer = new XMLSerializer(); return serializer.serializeToString(svg); } catch (err) { showToast('图片处理失败: ' + err.message, 'error'); return null; } }
+    async function createImageBubble(base64) { try { const dims = await getImageDimensions(base64); const w = dims.width; const h = dims.height; const svgNS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('xmlns', svgNS); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', w); svg.setAttribute('height', h); const image = document.createElementNS(svgNS, 'image'); image.setAttribute('x', '0'); image.setAttribute('y', '0'); image.setAttribute('width', w); image.setAttribute('height', h); image.setAttribute('href', base64); svg.appendChild(image); const text = document.createElementNS(svgNS, 'text'); text.setAttribute('x', w / 2); text.setAttribute('y', h / 2 + 30); text.setAttribute('text-anchor', 'middle'); text.setAttribute('dy', '0.35em'); text.setAttribute('font-size', Math.max(16, Math.round(h / 10))); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-weight', 'bold'); text.setAttribute('fill', '#d500ff'); text.textContent = '数量'; svg.appendChild(text); const serializer = new XMLSerializer(); return serializer.serializeToString(svg); } catch (err) { showToast('图片处理失败: ' + err.message, 'error'); return null; } }
     async function handleImageFile(file) { if (!file) return; imageUploadZone.classList.add('loading'); try { const base64 = await loadImageAsBase64(file); const svgCode = await createImageBubble(base64); if (svgCode) { input.value = svgCode; setInputMode('code'); imageUploadZone.classList.remove('loading'); imageFileInput.value = ''; handleExtract(); currentPreviewCode = svgCode; isSunnyMode = false; bubbleTitleText.textContent = '🎈 气泡预览'; openBubbleSection(); showToast('✅ 图片气泡已生成，可调整文本', 'success'); } else { imageUploadZone.classList.remove('loading'); } } catch (err) { imageUploadZone.classList.remove('loading'); imageFileInput.value = ''; showToast('图片处理失败: ' + err.message, 'error'); } }
     imageFileInput.addEventListener('change', e => { if (e.target.files[0]) handleImageFile(e.target.files[0]); });
     imageUploadZone.addEventListener('dragover', e => { e.preventDefault(); if (currentInputMode === 'image') imageUploadZone.classList.add('drag-over'); });
