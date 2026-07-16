@@ -1062,4 +1062,23 @@ colorPicker.init();
     input.value = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.4 19a4.2 4.2 0 0 1-1.57-.298L7 21v-3.134a2.668 2.668 0 0 1-1.795-3.773A4.8 4.8 0 0 1 8.113 5.16a5.335 5.335 0 0 1 9.194 1.078a5.333 5.333 0 0 1 3.404 8.771M16 19h6"/></svg>`;
     setInputMode('code');
     setTimeout(handleExtract, 50);
+    
+// 悬浮按钮：回到顶端 / 到底端（带点击高亮反馈）
+const btnTop = document.getElementById('btn-to-top');
+const btnBottom = document.getElementById('btn-to-bottom');
+
+function highlightButton(btn) {
+    btn.classList.add('highlight');
+    setTimeout(() => btn.classList.remove('highlight'), 400);
+}
+
+btnTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    highlightButton(btnTop);
+});
+
+btnBottom.addEventListener('click', () => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    highlightButton(btnBottom);
+});
 })();
