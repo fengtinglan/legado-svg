@@ -252,3 +252,23 @@ textarea.drag-over { border-color: #3b82f6 !important; border-style: dashed !imp
     box-shadow: 0 0 14px rgba(59,130,246,0.5);
     transform: scale(1.05);
 }
+
+/* 气泡图标行与链接状态行（与压缩行使用相同展开规则） */
+.btn-group.stacked .bubble-sub-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+.btn-group.stacked .bubble-sub-row button {
+    flex: 1;
+    min-width: 0;
+    width: auto !important;
+}
+.btn-group.stacked .bubble-link-row {
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    padding: 4px 0 0;
+}

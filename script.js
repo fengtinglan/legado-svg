@@ -1,6 +1,11 @@
 (() => {
     const STORAGE_KEY = 'customSvgUrl';
     const DEFAULT_URL = 'https://to-svg.com/zh';
+    const COMPRESS_STORAGE_KEY = 'customCompressUrl';
+    const DEFAULT_COMPRESS_URL = 'https://svg.wxeditor.com/tool/svg-compress';
+    const BUBBLE_ICON_STORAGE_KEY = 'customBubbleIconUrl';
+    const DEFAULT_BUBBLE_ICON_URL = 'https://icon.sucai999.com/s-%E6%B0%94%E6%B3%A1-1.html';
+
     const COLOR_REGEX = /#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b|rgb(a?)\([^\)]+\)|hsl(a?)\([^\)]+\)/g;
     const HALF_RATIO = 0.60, FULL_TRIGGER_RATIO = 0.85, CLOSE_RATIO = 0.30;
 
@@ -17,8 +22,6 @@
     let selectedTccolorIndices = [];
     let _backupSelectedTccolorIndices = [];
 
-    const COMPRESS_STORAGE_KEY = 'customCompressUrl';
-    const DEFAULT_COMPRESS_URL = 'https://svg.wxeditor.com/tool/svg-compress';
     const $ = id => document.getElementById(id);
     const input = $('codeInput'), resultDisplay = $('resultDisplay');
     const statsAndTools = $('statsAndTools'), colorCountSpan = $('colorCount');
@@ -193,182 +196,183 @@
 
     $('compressBtn').addEventListener('click', openCompressModal);
     $('compressCustomLinkBtn').addEventListener('click', customCompressLink);
+    $('bubbleIconBtn').addEventListener('click', openBubbleIconModal);
+    $('bubbleIconCustomLinkBtn').addEventListener('click', customBubbleIconLink);
 
     const TEXT_EXTENSIONS = new Set(['svg','txt','html','htm','xml','css','js','json','md','ts','jsx','tsx','vue','svelte']);
 
-const colorPicker = {
-    panel: null, overlay: null, svCanvas: null, svCtx: null, svCursor: null,
-    hueBar: null, hueThumb: null, currentInput: null, copyBtn: null,
-    targetPreview: null, targetInput: null, hue: 0, sat: 1, val: 1,
-    active: false, draggingSv: false, draggingHue: false, independentMode: false,
-    confirmBtn: null,
-    init() {
-        this.overlay = document.createElement('div');
-        this.overlay.className = 'color-picker-overlay';
-        document.body.appendChild(this.overlay);
-        this.overlay.addEventListener('click', () => this.close());
+    const colorPicker = {
+        panel: null, overlay: null, svCanvas: null, svCtx: null, svCursor: null,
+        hueBar: null, hueThumb: null, currentInput: null, copyBtn: null,
+        targetPreview: null, targetInput: null, hue: 0, sat: 1, val: 1,
+        active: false, draggingSv: false, draggingHue: false, independentMode: false,
+        confirmBtn: null,
+        init() {
+            this.overlay = document.createElement('div');
+            this.overlay.className = 'color-picker-overlay';
+            document.body.appendChild(this.overlay);
+            this.overlay.addEventListener('click', () => this.close());
 
-        this.panel = document.createElement('div');
-        this.panel.className = 'color-picker-panel';
-        this.panel.innerHTML = `
-            <div class="cp-sv-box"><canvas></canvas><div class="cp-sv-cursor"></div></div>
-            <div class="cp-hue-bar"><div class="cp-hue-thumb"></div></div>
-            <div class="cp-current-color">
-                <span class="color-preview" id="cpPreview" style="background-color:#ff0000;"></span>
-                <input type="text" class="cp-current-input" value="#ff0000">
-                <button class="cp-copy-btn">复制</button>
-                <button class="cp-apply-btn" style="margin-left:4px; padding:10px 14px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">确定</button>
-            </div>
-            <div class="cp-presets">
-                <div class="cp-preset-swatch" style="background:#000000" data-color="#000000"></div>
-                <div class="cp-preset-swatch" style="background:#ffffff" data-color="#ffffff"></div>
-                <div class="cp-preset-swatch" style="background:#ef4444" data-color="#ef4444"></div>
-                <div class="cp-preset-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
-                <div class="cp-preset-swatch" style="background:#10b981" data-color="#10b981"></div>
-                <div class="cp-preset-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
-            </div>
-            <div class="cp-actions">
-                <button class="cp-btn-close">关闭</button>
-            </div>
-        `;
-        document.body.appendChild(this.panel);
+            this.panel = document.createElement('div');
+            this.panel.className = 'color-picker-panel';
+            this.panel.innerHTML = `
+                <div class="cp-sv-box"><canvas></canvas><div class="cp-sv-cursor"></div></div>
+                <div class="cp-hue-bar"><div class="cp-hue-thumb"></div></div>
+                <div class="cp-current-color">
+                    <span class="color-preview" id="cpPreview" style="background-color:#ff0000;"></span>
+                    <input type="text" class="cp-current-input" value="#ff0000">
+                    <button class="cp-copy-btn">复制</button>
+                    <button class="cp-apply-btn" style="margin-left:4px; padding:10px 14px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">确定</button>
+                </div>
+                <div class="cp-presets">
+                    <div class="cp-preset-swatch" style="background:#000000" data-color="#000000"></div>
+                    <div class="cp-preset-swatch" style="background:#ffffff" data-color="#ffffff"></div>
+                    <div class="cp-preset-swatch" style="background:#ef4444" data-color="#ef4444"></div>
+                    <div class="cp-preset-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
+                    <div class="cp-preset-swatch" style="background:#10b981" data-color="#10b981"></div>
+                    <div class="cp-preset-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
+                </div>
+                <div class="cp-actions">
+                    <button class="cp-btn-close">关闭</button>
+                </div>
+            `;
+            document.body.appendChild(this.panel);
 
-        this.svCanvas = this.panel.querySelector('canvas');
-        this.svCtx = this.svCanvas.getContext('2d');
-        this.svCursor = this.panel.querySelector('.cp-sv-cursor');
-        this.hueBar = this.panel.querySelector('.cp-hue-bar');
-        this.hueThumb = this.panel.querySelector('.cp-hue-thumb');
-        this.currentInput = this.panel.querySelector('.cp-current-input');
-        this.copyBtn = this.panel.querySelector('.cp-copy-btn');
-        this.cpPreview = this.panel.querySelector('#cpPreview');
-        this.confirmBtn = this.panel.querySelector('.cp-apply-btn');
-        const presets = this.panel.querySelectorAll('.cp-preset-swatch');
+            this.svCanvas = this.panel.querySelector('canvas');
+            this.svCtx = this.svCanvas.getContext('2d');
+            this.svCursor = this.panel.querySelector('.cp-sv-cursor');
+            this.hueBar = this.panel.querySelector('.cp-hue-bar');
+            this.hueThumb = this.panel.querySelector('.cp-hue-thumb');
+            this.currentInput = this.panel.querySelector('.cp-current-input');
+            this.copyBtn = this.panel.querySelector('.cp-copy-btn');
+            this.cpPreview = this.panel.querySelector('#cpPreview');
+            this.confirmBtn = this.panel.querySelector('.cp-apply-btn');
+            const presets = this.panel.querySelectorAll('.cp-preset-swatch');
 
-        const svBox = this.panel.querySelector('.cp-sv-box');
-        svBox.addEventListener('mousedown', e => this.startSv(e));
-        svBox.addEventListener('touchstart', e => this.startSv(e), { passive: false });
-        this.hueBar.addEventListener('mousedown', e => this.startHue(e));
-        this.hueBar.addEventListener('touchstart', e => this.startHue(e), { passive: false });
+            const svBox = this.panel.querySelector('.cp-sv-box');
+            svBox.addEventListener('mousedown', e => this.startSv(e));
+            svBox.addEventListener('touchstart', e => this.startSv(e), { passive: false });
+            this.hueBar.addEventListener('mousedown', e => this.startHue(e));
+            this.hueBar.addEventListener('touchstart', e => this.startHue(e), { passive: false });
 
-        // 确定按钮：应用输入框中的颜色
-        this.confirmBtn.addEventListener('click', () => {
-            const hex = this.currentInput.value.trim();
-            if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) {
-                let fullHex = hex;
-                if (hex.length === 4) {
-                    fullHex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
-                }
-                this.currentInput.value = fullHex;
-                this.cpPreview.style.backgroundColor = fullHex;
-                const [r, g, b] = this.hexToRgb(fullHex);
-                const [h, s, v] = this.rgbToHsv(r, g, b);
-                this.hue = h;
-                this.sat = s;
-                this.val = v;
-                this.drawSv();
-                this.updateHueThumb();
-                this.applyColorToTarget();
-            } else {
-                const curColor = this.getCurrentColor();
-                this.currentInput.value = curColor;
-                this.cpPreview.style.backgroundColor = curColor;
-                this.applyColorToTarget();
-            }
-        });
-
-        presets.forEach(el => {
-            el.addEventListener('click', e => {
-                e.stopPropagation();
-                const color = el.dataset.color;
-                if (this.targetInput && !this.independentMode) {
-                    this.targetInput.value = color;
-                    this.syncPreview();
-                    if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
-                        updateBubblePreview();
+            this.confirmBtn.addEventListener('click', () => {
+                const hex = this.currentInput.value.trim();
+                if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) {
+                    let fullHex = hex;
+                    if (hex.length === 4) {
+                        fullHex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
                     }
-                    updateVariableStyle(this.targetInput);
-                    updateVariableLabel(this.targetInput);
+                    this.currentInput.value = fullHex;
+                    this.cpPreview.style.backgroundColor = fullHex;
+                    const [r, g, b] = this.hexToRgb(fullHex);
+                    const [h, s, v] = this.rgbToHsv(r, g, b);
+                    this.hue = h;
+                    this.sat = s;
+                    this.val = v;
+                    this.drawSv();
+                    this.updateHueThumb();
+                    this.applyColorToTarget();
+                } else {
+                    const curColor = this.getCurrentColor();
+                    this.currentInput.value = curColor;
+                    this.cpPreview.style.backgroundColor = curColor;
+                    this.applyColorToTarget();
                 }
+            });
+
+            presets.forEach(el => {
+                el.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const color = el.dataset.color;
+                    if (this.targetInput && !this.independentMode) {
+                        this.targetInput.value = color;
+                        this.syncPreview();
+                        if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                            updateBubblePreview();
+                        }
+                        updateVariableStyle(this.targetInput);
+                        updateVariableLabel(this.targetInput);
+                    }
+                    this.currentInput.value = color;
+                    this.cpPreview.style.backgroundColor = color;
+                    this.applyColorToTarget();
+                    this.close();
+                });
+            });
+
+            this.copyBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                const val = this.currentInput.value;
+                copyText(val, `已复制颜色 ${val}`);
+            });
+
+            this.panel.querySelector('.cp-btn-close').addEventListener('click', () => this.close());
+
+            document.addEventListener('mousemove', e => this.moveSv(e));
+            document.addEventListener('mouseup', () => this.endSv());
+            document.addEventListener('touchmove', e => this.moveSv(e), { passive: false });
+            document.addEventListener('touchend', () => this.endSv());
+            document.addEventListener('mousemove', e => this.moveHue(e));
+            document.addEventListener('mouseup', () => this.endHue());
+            document.addEventListener('touchmove', e => this.moveHue(e), { passive: false });
+            document.addEventListener('touchend', () => this.endHue());
+
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+        },
+        resizeCanvas() { if (!this.svCanvas) return; const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width || 280; this.svCanvas.width = w; this.svCanvas.height = 200; this.drawSv(); },
+        drawSv() { const ctx = this.svCtx, w = this.svCanvas.width, h = this.svCanvas.height; ctx.clearRect(0,0,w,h); ctx.fillStyle = `hsl(${this.hue},100%,50%)`; ctx.fillRect(0,0,w,h); const whiteGrad = ctx.createLinearGradient(0,0,w,0); whiteGrad.addColorStop(0,'white'); whiteGrad.addColorStop(1,'transparent'); ctx.fillStyle = whiteGrad; ctx.fillRect(0,0,w,h); const blackGrad = ctx.createLinearGradient(0,0,0,h); blackGrad.addColorStop(0,'transparent'); blackGrad.addColorStop(1,'black'); ctx.fillStyle = blackGrad; ctx.fillRect(0,0,w,h); this.updateSvCursor(); },
+        updateSvCursor() { const w = this.svCanvas.width, h = this.svCanvas.height; const x = this.sat * w, y = (1-this.val) * h; this.svCursor.style.left = x+'px'; this.svCursor.style.top = y+'px'; },
+        updateHueThumb() { const barWidth = this.hueBar.clientWidth; const x = (this.hue/360) * barWidth; this.hueThumb.style.left = x+'px'; },
+        setHueFromPos(clientX) { const rect = this.hueBar.getBoundingClientRect(); const barWidth = rect.width; let x = clientX - rect.left; x = Math.max(0, Math.min(barWidth, x)); this.hue = (x/barWidth)*360; this.drawSv(); this.updateHueThumb(); this.applyColorToTarget(); },
+        setSvFromPos(clientX, clientY) { const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width, h = rect.height; let x = clientX - rect.left, y = clientY - rect.top; x = Math.max(0, Math.min(w, x)); y = Math.max(0, Math.min(h, y)); this.sat = x/w; this.val = 1 - y/h; this.updateSvCursor(); this.applyColorToTarget(); },
+        startSv(e) { e.preventDefault(); this.draggingSv = true; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
+        moveSv(e) { if (!this.draggingSv) return; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
+        endSv() { this.draggingSv = false; },
+        startHue(e) { e.preventDefault(); this.draggingHue = true; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
+        moveHue(e) { if (!this.draggingHue) return; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
+        endHue() { this.draggingHue = false; },
+        getCurrentColor() { const [r,g,b] = this.hsvToRgb(this.hue, this.sat, this.val); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); },
+        hsvToRgb(h,s,v) { let r,g,b; const i=Math.floor(h/60), f=h/60-i; const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s); switch(i%6) { case 0: r=v;g=t;b=p; break; case 1: r=q;g=v;b=p; break; case 2: r=p;g=v;b=t; break; case 3: r=p;g=q;b=v; break; case 4: r=t;g=p;b=v; break; case 5: r=v;g=p;b=q; break; } return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; },
+        applyColorToTarget() {
+            const color = this.getCurrentColor();
+            if (document.activeElement !== this.currentInput) {
                 this.currentInput.value = color;
                 this.cpPreview.style.backgroundColor = color;
-                this.applyColorToTarget();
-                this.close();
-            });
-        });
-
-        this.copyBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            const val = this.currentInput.value;
-            copyText(val, `已复制颜色 ${val}`);
-        });
-
-        this.panel.querySelector('.cp-btn-close').addEventListener('click', () => this.close());
-
-        document.addEventListener('mousemove', e => this.moveSv(e));
-        document.addEventListener('mouseup', () => this.endSv());
-        document.addEventListener('touchmove', e => this.moveSv(e), { passive: false });
-        document.addEventListener('touchend', () => this.endSv());
-        document.addEventListener('mousemove', e => this.moveHue(e));
-        document.addEventListener('mouseup', () => this.endHue());
-        document.addEventListener('touchmove', e => this.moveHue(e), { passive: false });
-        document.addEventListener('touchend', () => this.endHue());
-
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-    },
-    resizeCanvas() { if (!this.svCanvas) return; const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width || 280; this.svCanvas.width = w; this.svCanvas.height = 200; this.drawSv(); },
-    drawSv() { const ctx = this.svCtx, w = this.svCanvas.width, h = this.svCanvas.height; ctx.clearRect(0,0,w,h); ctx.fillStyle = `hsl(${this.hue},100%,50%)`; ctx.fillRect(0,0,w,h); const whiteGrad = ctx.createLinearGradient(0,0,w,0); whiteGrad.addColorStop(0,'white'); whiteGrad.addColorStop(1,'transparent'); ctx.fillStyle = whiteGrad; ctx.fillRect(0,0,w,h); const blackGrad = ctx.createLinearGradient(0,0,0,h); blackGrad.addColorStop(0,'transparent'); blackGrad.addColorStop(1,'black'); ctx.fillStyle = blackGrad; ctx.fillRect(0,0,w,h); this.updateSvCursor(); },
-    updateSvCursor() { const w = this.svCanvas.width, h = this.svCanvas.height; const x = this.sat * w, y = (1-this.val) * h; this.svCursor.style.left = x+'px'; this.svCursor.style.top = y+'px'; },
-    updateHueThumb() { const barWidth = this.hueBar.clientWidth; const x = (this.hue/360) * barWidth; this.hueThumb.style.left = x+'px'; },
-    setHueFromPos(clientX) { const rect = this.hueBar.getBoundingClientRect(); const barWidth = rect.width; let x = clientX - rect.left; x = Math.max(0, Math.min(barWidth, x)); this.hue = (x/barWidth)*360; this.drawSv(); this.updateHueThumb(); this.applyColorToTarget(); },
-    setSvFromPos(clientX, clientY) { const rect = this.svCanvas.parentElement.getBoundingClientRect(); const w = rect.width, h = rect.height; let x = clientX - rect.left, y = clientY - rect.top; x = Math.max(0, Math.min(w, x)); y = Math.max(0, Math.min(h, y)); this.sat = x/w; this.val = 1 - y/h; this.updateSvCursor(); this.applyColorToTarget(); },
-    startSv(e) { e.preventDefault(); this.draggingSv = true; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
-    moveSv(e) { if (!this.draggingSv) return; this.setSvFromPos(e.touches?e.touches[0].clientX:e.clientX, e.touches?e.touches[0].clientY:e.clientY); },
-    endSv() { this.draggingSv = false; },
-    startHue(e) { e.preventDefault(); this.draggingHue = true; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
-    moveHue(e) { if (!this.draggingHue) return; this.setHueFromPos(e.touches?e.touches[0].clientX:e.clientX); },
-    endHue() { this.draggingHue = false; },
-    getCurrentColor() { const [r,g,b] = this.hsvToRgb(this.hue, this.sat, this.val); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); },
-    hsvToRgb(h,s,v) { let r,g,b; const i=Math.floor(h/60), f=h/60-i; const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s); switch(i%6) { case 0: r=v;g=t;b=p; break; case 1: r=q;g=v;b=p; break; case 2: r=p;g=v;b=t; break; case 3: r=p;g=q;b=v; break; case 4: r=t;g=p;b=v; break; case 5: r=v;g=p;b=q; break; } return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; },
-    applyColorToTarget() {
-        const color = this.getCurrentColor();
-        if (document.activeElement !== this.currentInput) {
-            this.currentInput.value = color;
-            this.cpPreview.style.backgroundColor = color;
-        }
-        if (!this.independentMode && this.targetInput) {
-            this.targetInput.value = color;
-            this.syncPreview();
-            if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
-                updateBubblePreview();
             }
-            updateVariableStyle(this.targetInput);
-            updateVariableLabel(this.targetInput);
-        }
-    },
-    syncPreview() { if (this.targetPreview && this.targetInput) { const val = this.targetInput.value.trim(); if (/^#([0-9a-fA-F]{3,8})$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val==='transparent') this.targetPreview.style.backgroundColor = val; else this.targetPreview.style.backgroundColor = '#ccc'; } },
-    open(previewEl, inputEl, independent = false) {
-        this.targetPreview = previewEl; this.targetInput = inputEl; this.independentMode = independent;
-        const color = (inputEl && !independent) ? inputEl.value.trim() : this.currentInput.value;
-        if (/^#([0-9a-fA-F]{6})$/.test(color)) {
-            const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
-            const hsv = this.rgbToHsv(r,g,b);
-            this.hue = hsv[0]; this.sat = hsv[1]; this.val = hsv[2];
-        } else { this.hue = 0; this.sat = 1; this.val = 1; }
-        this.drawSv();
-        this.updateHueThumb();
-        const curColor = this.getCurrentColor();
-        this.currentInput.value = curColor;
-        this.cpPreview.style.backgroundColor = curColor;
-        this.overlay.classList.add('active');
-        this.panel.classList.add('active');
-        this.active = true;
-    },
-    close() { this.overlay.classList.remove('active'); this.panel.classList.remove('active'); this.active = false; },
-    hexToRgb(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; },
-    rgbToHsv(r,g,b) { r/=255;g/=255;b/=255; const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s,v=max; const d=max-min; s=max===0?0:d/max; if(d!==0) { switch(max) { case r: h=((g-b)/d+(g<b?6:0))*60; break; case g: h=((b-r)/d+2)*60; break; case b: h=((r-g)/d+4)*60; break; } } return [h,s,v]; }
-};
-colorPicker.init();
+            if (!this.independentMode && this.targetInput) {
+                this.targetInput.value = color;
+                this.syncPreview();
+                if ([strokeColorInput, fillColorInput, bgColor].includes(this.targetInput) || this.targetInput.classList.contains('shape-fill-input')) {
+                    updateBubblePreview();
+                }
+                updateVariableStyle(this.targetInput);
+                updateVariableLabel(this.targetInput);
+            }
+        },
+        syncPreview() { if (this.targetPreview && this.targetInput) { const val = this.targetInput.value.trim(); if (/^#([0-9a-fA-F]{3,8})$/.test(val) || /^rgb/i.test(val) || /^hsl/i.test(val) || val==='transparent') this.targetPreview.style.backgroundColor = val; else this.targetPreview.style.backgroundColor = '#ccc'; } },
+        open(previewEl, inputEl, independent = false) {
+            this.targetPreview = previewEl; this.targetInput = inputEl; this.independentMode = independent;
+            const color = (inputEl && !independent) ? inputEl.value.trim() : this.currentInput.value;
+            if (/^#([0-9a-fA-F]{6})$/.test(color)) {
+                const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
+                const hsv = this.rgbToHsv(r,g,b);
+                this.hue = hsv[0]; this.sat = hsv[1]; this.val = hsv[2];
+            } else { this.hue = 0; this.sat = 1; this.val = 1; }
+            this.drawSv();
+            this.updateHueThumb();
+            const curColor = this.getCurrentColor();
+            this.currentInput.value = curColor;
+            this.cpPreview.style.backgroundColor = curColor;
+            this.overlay.classList.add('active');
+            this.panel.classList.add('active');
+            this.active = true;
+        },
+        close() { this.overlay.classList.remove('active'); this.panel.classList.remove('active'); this.active = false; },
+        hexToRgb(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; },
+        rgbToHsv(r,g,b) { r/=255;g/=255;b/=255; const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s,v=max; const d=max-min; s=max===0?0:d/max; if(d!==0) { switch(max) { case r: h=((g-b)/d+(g<b?6:0))*60; break; case g: h=((b-r)/d+2)*60; break; case b: h=((r-g)/d+4)*60; break; } } return [h,s,v]; }
+    };
+    colorPicker.init();
 
     [strokeColorPicker, fillColorPicker, $('bgColorPicker'), $('replaceColorPicker')].forEach(p => { if(p) p.style.display='none'; });
 
@@ -507,10 +511,14 @@ colorPicker.init();
 
     function getCompressUrl() { return localStorage.getItem(COMPRESS_STORAGE_KEY) || DEFAULT_COMPRESS_URL; }
     function setCompressUrl(url) { localStorage.setItem(COMPRESS_STORAGE_KEY, url); updateCompressLinkStatus(); }
-    function updateCompressLinkStatus() { const url = getCompressUrl(); const linkEl = $('compressLinkStatus'); try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } }
+    function updateCompressLinkStatus() { const url = getCompressUrl(); const linkEl = $('compressLinkStatus'); if (linkEl) { try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } } }
     function getSvgUrl() { return localStorage.getItem(STORAGE_KEY) || DEFAULT_URL; }
     function setSvgUrl(url) { localStorage.setItem(STORAGE_KEY, url); updateLinkStatus(); }
-    function updateLinkStatus() { const url = getSvgUrl(); const linkEl = $('linkStatus'); try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } }
+    function updateLinkStatus() { const url = getSvgUrl(); const linkEl = $('linkStatus'); if (linkEl) { try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } } }
+    function getBubbleIconUrl() { return localStorage.getItem(BUBBLE_ICON_STORAGE_KEY) || DEFAULT_BUBBLE_ICON_URL; }
+    function setBubbleIconUrl(url) { localStorage.setItem(BUBBLE_ICON_STORAGE_KEY, url); updateBubbleIconLinkStatus(); }
+    function updateBubbleIconLinkStatus() { const url = getBubbleIconUrl(); const linkEl = $('bubbleLinkStatus'); if (linkEl) { try { const p = new URL(url); linkEl.textContent = p.hostname.replace(/^www\./, ''); linkEl.title = url; } catch { linkEl.textContent = url.substring(0, 28) + '…'; linkEl.title = url; } } }
+
     function showToast(msg, type = 'success', dur = 3000) { const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'; const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<span class="toast-icon">${icon}</span> ${msg}`; toastContainer.appendChild(toast); const timer = setTimeout(() => { toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }, dur); toast.addEventListener('click', () => { clearTimeout(timer); toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }); }
     function extractColors(text) { const matches = text.match(COLOR_REGEX); if (!matches) return []; const seen = new Set(); return matches.filter(c => { const u = c.toUpperCase(); if (seen.has(u)) return false; seen.add(u); return true; }); }
     function renderColors(colors) {
@@ -536,9 +544,11 @@ colorPicker.init();
     function setUIMode(fullscreen, animate = true) { isFullscreen = fullscreen; const drawer = $('drawerContent'); if (!animate) drawer.style.transition = 'none'; if (fullscreen) { $('toSvgModal').classList.add('fullscreen-mode'); $('toSvgModalBody').style.overflow = 'auto'; } else { $('toSvgModal').classList.remove('fullscreen-mode'); $('toSvgModalBody').style.overflow = 'hidden'; } if (!animate) requestAnimationFrame(() => { drawer.style.transition = ''; }); }
     function openToSvgModal() { const url = getSvgUrl(); $('toSvgModalBody').querySelector('iframe').src = url; const half = getHalfHeight(); $('drawerContent').style.height = half + 'px'; setUIMode(false, false); $('toSvgModal').classList.add('active'); $('toSvgLoading').classList.remove('hidden'); $('toSvgModalBody').querySelector('iframe').onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); }
     function openCompressModal() { const url = getCompressUrl(); $('toSvgModalBody').querySelector('iframe').src = url; const half = getHalfHeight(); $('drawerContent').style.height = half + 'px'; setUIMode(false, false); $('toSvgModal').classList.add('active'); $('toSvgLoading').classList.remove('hidden'); $('toSvgModalBody').querySelector('iframe').onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); }
+    function openBubbleIconModal() { const url = getBubbleIconUrl(); $('toSvgModalBody').querySelector('iframe').src = url; const half = getHalfHeight(); $('drawerContent').style.height = half + 'px'; setUIMode(false, false); $('toSvgModal').classList.add('active'); $('toSvgLoading').classList.remove('hidden'); $('toSvgModalBody').querySelector('iframe').onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); }
     function closeToSvgModal() { const modal = $('toSvgModal'); modal.classList.add('closing'); setTimeout(() => { modal.classList.remove('active', 'closing'); $('drawerContent').style.height = getHalfHeight() + 'px'; setUIMode(false, false); }, 300); }
     function customLink() { const current = getSvgUrl(); const newUrl = prompt('请输入图片转 SVG 服务的完整链接：', current); if (newUrl === null) return; const trimmed = newUrl.trim(); if (!trimmed) { showToast('链接不能为空', 'error'); return; } if (!/^https?:\/\//.test(trimmed)) { showToast('请输入有效链接', 'error'); return; } setSvgUrl(trimmed); showToast(`✅ 已切换至：${trimmed}`, 'success'); if ($('toSvgModal').classList.contains('active')) { const iframe = $('toSvgModalBody').querySelector('iframe'); iframe.src = trimmed; $('toSvgLoading').classList.remove('hidden'); iframe.onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); } }
     function customCompressLink() { const current = getCompressUrl(); const newUrl = prompt('请输入 SVG 压缩服务的完整链接：', current); if (newUrl === null) return; const trimmed = newUrl.trim(); if (!trimmed) { showToast('链接不能为空', 'error'); return; } if (!/^https?:\/\//.test(trimmed)) { showToast('请输入有效链接', 'error'); return; } setCompressUrl(trimmed); showToast(`✅ 已切换至：${trimmed}`, 'success'); if ($('toSvgModal').classList.contains('active')) { const iframe = $('toSvgModalBody').querySelector('iframe'); iframe.src = trimmed; $('toSvgLoading').classList.remove('hidden'); iframe.onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); } }
+    function customBubbleIconLink() { const current = getBubbleIconUrl(); const newUrl = prompt('请输入气泡图标素材的完整链接：', current); if (newUrl === null) return; const trimmed = newUrl.trim(); if (!trimmed) { showToast('链接不能为空', 'error'); return; } if (!/^https?:\/\//.test(trimmed)) { showToast('请输入有效链接', 'error'); return; } setBubbleIconUrl(trimmed); showToast(`✅ 已切换至：${trimmed}`, 'success'); if ($('toSvgModal').classList.contains('active')) { const iframe = $('toSvgModalBody').querySelector('iframe'); iframe.src = trimmed; $('toSvgLoading').classList.remove('hidden'); iframe.onload = () => $('toSvgLoading').classList.add('hidden'); setTimeout(() => $('toSvgLoading').classList.add('hidden'), 10000); } }
     function toggleTools() { toolsOpen = !toolsOpen; const toolGroup = $('toolGroup'), toggleBtn = $('toolToggleBtn'); if (toolsOpen) { toolGroup.classList.add('stacked'); toggleBtn.classList.add('open'); } else { toolGroup.classList.remove('stacked'); toggleBtn.classList.remove('open'); } }
     function setInputMode(mode) { currentInputMode = mode; input.classList.add('hidden'); uploadZone.classList.add('hidden'); imageUploadZone.classList.add('hidden'); codeTabBtn.classList.remove('active'); uploadTabBtn.classList.remove('active'); imageTabBtn.classList.remove('active'); if (mode === 'code') { input.classList.remove('hidden'); codeTabBtn.classList.add('active'); input.focus(); } else if (mode === 'upload') { uploadZone.classList.remove('hidden'); uploadTabBtn.classList.add('active'); } else if (mode === 'image') { imageUploadZone.classList.remove('hidden'); imageTabBtn.classList.add('active'); } }
     codeTabBtn.addEventListener('click', () => setInputMode('code')); uploadTabBtn.addEventListener('click', () => setInputMode('upload')); imageTabBtn.addEventListener('click', () => setInputMode('image'));
@@ -1058,27 +1068,27 @@ colorPicker.init();
     replaceInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); performReplace(); } });
     helpBtn.addEventListener('click', () => { helpModalOverlay.classList.add('active'); }); helpModalClose.addEventListener('click', () => { helpModalOverlay.classList.remove('active'); }); helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active'); });
     changelogBtn.addEventListener('click', () => { changelogModalOverlay.classList.add('active'); }); changelogModalClose.addEventListener('click', () => { changelogModalOverlay.classList.remove('active'); }); changelogModalOverlay.addEventListener('click', e => { if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active'); });
-    updateLinkStatus(); updateCompressLinkStatus();
+    updateLinkStatus(); updateCompressLinkStatus(); updateBubbleIconLinkStatus();
     input.value = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.4 19a4.2 4.2 0 0 1-1.57-.298L7 21v-3.134a2.668 2.668 0 0 1-1.795-3.773A4.8 4.8 0 0 1 8.113 5.16a5.335 5.335 0 0 1 9.194 1.078a5.333 5.333 0 0 1 3.404 8.771M16 19h6"/></svg>`;
     setInputMode('code');
     setTimeout(handleExtract, 50);
     
-// 悬浮按钮：回到顶端 / 到底端（带点击高亮反馈）
-const btnTop = document.getElementById('btn-to-top');
-const btnBottom = document.getElementById('btn-to-bottom');
+    // 悬浮按钮：回到顶端 / 到底端（带点击高亮反馈）
+    const btnTop = document.getElementById('btn-to-top');
+    const btnBottom = document.getElementById('btn-to-bottom');
 
-function highlightButton(btn) {
-    btn.classList.add('highlight');
-    setTimeout(() => btn.classList.remove('highlight'), 400);
-}
+    function highlightButton(btn) {
+        btn.classList.add('highlight');
+        setTimeout(() => btn.classList.remove('highlight'), 400);
+    }
 
-btnTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    highlightButton(btnTop);
-});
+    btnTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        highlightButton(btnTop);
+    });
 
-btnBottom.addEventListener('click', () => {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-    highlightButton(btnBottom);
-});
+    btnBottom.addEventListener('click', () => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        highlightButton(btnBottom);
+    });
 })();
