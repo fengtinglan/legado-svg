@@ -45,8 +45,8 @@
     const rotateAngleInput = $('rotateAngle'), textRotateAngleInput = $('textRotateAngle');
     const exportModalOverlay = $('exportModalOverlay'), exportModalClose = $('exportModalClose');
     const exportCopyCodeBtn = $('exportCopyCodeBtn'), exportTxtBtn = $('exportTxtBtn'), exportSvgBtn = $('exportSvgBtn');
-    const helpModalOverlay = $('helpModalOverlay'), helpModalClose = $('helpModalClose'), helpBtn = $('helpBtn');
-    const changelogModalOverlay = $('changelogModalOverlay'), changelogModalClose = $('changelogModalClose'), changelogBtn = $('changelogBtn');
+    const helpModalOverlay = $('helpModalOverlay'), helpModalClose = $('helpModalClose');
+    const changelogModalOverlay = $('changelogModalOverlay'), changelogModalClose = $('changelogModalClose');
     const keepModifiedModalOverlay = $('keepModifiedModalOverlay');
     const keepModifiedModalClose = $('keepModifiedModalClose');
     const keepModifiedConfirmBtn = $('keepModifiedConfirmBtn');
@@ -610,7 +610,6 @@
         }
     }
 
-    // ★★★ 修复后的 updateBubblePreview：不修改 width/height，只补 viewBox ★★★
     function updateBubblePreview() {
         const code = currentPreviewCode;
         if (!code || !/<svg\b/i.test(code)) {
@@ -626,13 +625,12 @@
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
         const svgEl = previewDoc.documentElement;
 
-        // 只确保有 viewBox，不覆盖 width/height（交给 CSS 的 max-width/max-height）
         if (!svgEl.getAttribute('viewBox')) {
             const w = parseFloat(svgEl.getAttribute('width')) || 1153;
             const h = parseFloat(svgEl.getAttribute('height')) || 1024;
             svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
         }
-        svgEl.removeAttribute('preserveAspectRatio'); // 清理可能遗留的属性，让浏览器自行处理
+        svgEl.removeAttribute('preserveAspectRatio');
 
         const shapes = previewDoc.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
         const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
@@ -738,7 +736,6 @@
         const serializer = new XMLSerializer();
         bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
 
-        // 确保关闭按钮存在
         let closeBtn = bubblePreviewBox.querySelector('#closePinBtn');
         if (!closeBtn) {
             closeBtn = document.createElement('button');
@@ -1091,8 +1088,11 @@
     window.addEventListener('resize', () => { windowHeight = window.innerHeight; if (!$('toSvgModal').classList.contains('active')) return; if (isFullscreen) $('drawerContent').style.height = getFullHeight() + 'px'; else $('drawerContent').style.height = getHalfHeight() + 'px'; });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (changelogModalOverlay.classList.contains('active')) { changelogModalOverlay.classList.remove('active'); } if (exportModalOverlay.classList.contains('active')) { closeExportModal(); } if (helpModalOverlay.classList.contains('active')) { helpModalOverlay.classList.remove('active'); } if (keepModifiedModalOverlay && keepModifiedModalOverlay.classList.contains('active')) { keepModified = false; closeKeepModifiedModal(); doExportBubble(); } if (tccolorModalOverlay && tccolorModalOverlay.classList.contains('active')) { onTccolorCancel(); } if ($('svgModal').classList.contains('active')) closeModal(); if ($('toSvgModal').classList.contains('active')) closeToSvgModal(); if (toolsOpen) toggleTools(); if (!bubbleSection.classList.contains('hidden')) closeBubbleSection(); if (colorPicker.active) colorPicker.close(); } if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && document.activeElement === input) { e.preventDefault(); handleExtract(); } });
     replaceInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); performReplace(); } });
-    helpBtn.addEventListener('click', () => { helpModalOverlay.classList.add('active'); }); helpModalClose.addEventListener('click', () => { helpModalOverlay.classList.remove('active'); }); helpModalOverlay.addEventListener('click', e => { if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active'); });
-    changelogBtn.addEventListener('click', () => { changelogModalOverlay.classList.add('active'); }); changelogModalClose.addEventListener('click', () => { changelogModalOverlay.classList.remove('active'); }); changelogModalOverlay.addEventListener('click', e => { if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active'); });
+    // 打开帮助弹窗（现在通过 settings.html 的按钮触发，此处保留备用）
+    // 但按钮已不存在，故删除 helpBtn 事件
+    // 同理删除 changelogBtn、settingsBtn、themeToggleBtn 等事件
+
+    // 更新链接状态
     updateLinkStatus(); updateCompressLinkStatus(); updateBubbleIconLinkStatus();
     input.value = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.4 19a4.2 4.2 0 0 1-1.57-.298L7 21v-3.134a2.668 2.668 0 0 1-1.795-3.773A4.8 4.8 0 0 1 8.113 5.16a5.335 5.335 0 0 1 9.194 1.078a5.333 5.333 0 0 1 3.404 8.771M16 19h6"/></svg>`;
     setInputMode('code');
@@ -1103,4 +1103,34 @@
     function highlightButton(btn) { btn.classList.add('highlight'); setTimeout(() => btn.classList.remove('highlight'), 400); }
     btnTop.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); highlightButton(btnTop); });
     btnBottom.addEventListener('click', () => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); highlightButton(btnBottom); });
+
+    // 深色模式初始化（如果 settings.html 未控制，则保留系统偏好初始化）
+    const savedDarkMode = localStorage.getItem('legado-svg-dark-mode');
+    if (savedDarkMode === 'true') {
+        document.body.classList.add('dark-mode');
+    } else if (savedDarkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark-mode');
+    }
+
+// ========== 通过 hash 打开帮助/更新日志弹窗 ==========
+function checkHash() {
+    if (location.hash === '#help') {
+        helpModalOverlay.classList.add('active');
+    } else if (location.hash === '#changelog') {
+        changelogModalOverlay.classList.add('active');
+    }
+}
+window.addEventListener('hashchange', checkHash);
+// 页面加载时也检查
+if (location.hash) checkHash();
+// 监听父页面发来的深色模式消息
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'darkMode') {
+        if (event.data.isDark) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }
+});
 })();

@@ -3,12 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>legado-svg</title>
+    <title>legado-svg · 设置</title>
     <link rel="icon" type="image/svg+xml" href="https://legado-svg.heartthrob.cn/images/legado-svg.svg">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --toggle-bg: #cbd5e1;
+            --bottom-nav-height: 72px;
+            --modal-radius: 24px;
+        }
+        .dark-mode {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --toggle-bg: #475569;
+        }
+
+        * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding-top: 80px;
+            padding-bottom: calc(var(--bottom-nav-height) + 24px);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        .dark-mode .top-nav { background: rgba(15,23,42,0.85); }
+        .nav-inner { max-width:950px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+        .nav-brand { display:flex; align-items:center; gap:12px; }
+        .nav-logo { width:36px; height:36px; }
+        .nav-title { display:flex; flex-direction:column; }
+        .nav-title-text { font-size:1.5rem; font-weight:800; color:var(--text); line-height:1.2; }
+        .nav-update { font-size:0.7rem; color:var(--text-secondary); }
+        .nav-actions { display:flex; align-items:center; gap:8px; }
+        .theme-toggle-btn {
+            width:38px; height:38px; border-radius:10px; border:none; background:transparent;
+            cursor:pointer; font-size:1.2rem; color:var(--text-secondary); transition:background 0.2s;
+        }
+        .theme-icon-dark { display:none; }
+        .dark-mode .theme-icon-light { display:none; }
+        .dark-mode .theme-icon-dark { display:inline; }
+        .nav-menu { position:static; }
+        .nav-menu-btn {
+            list-style:none; width:38px; height:38px; border-radius:10px; display:flex;
+            align-items:center; justify-content:center; cursor:pointer; background:transparent;
+            border:none; color:var(--text-secondary); font-size:1.4rem;
+        }
+        .nav-dropdown {
+            position:absolute; left:0; right:0; top:100%; background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(12px); border:1px solid var(--border); border-top:none;
+            border-radius:0 0 14px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.08);
+            padding:8px 20px; display:none; flex-direction:column; z-index:100;
+        }
+        .dark-mode .nav-dropdown { background:rgba(15,23,42,0.92); }
+        .nav-menu[open] .nav-dropdown { display:flex; }
+        .nav-dropdown button {
+            display:flex; align-items:center; width:100%; padding:10px 0; border:none;
+            background:transparent; font-size:0.95rem; font-weight:500; color:var(--text);
+            cursor:pointer; text-align:left; font-family:inherit; transition:background 0.15s; gap:8px;
+        }
+        .nav-dropdown button:hover { background:rgba(0,0,0,0.04); border-radius:8px; padding-left:8px; }
+
+        .main-content { max-width:950px; margin:0 auto; padding:24px 20px 40px; }
+        .view { display:none; }
+        .view.active { display:block; }
+
+        /* 主页 iframe 容器 */
+        #viewHome {
+            width: 100vw;
+            height: calc(100vh - 80px - var(--bottom-nav-height) - 24px);
+            margin: -24px -20px 0 -20px;
+            max-width: 100vw;
+            position: relative;
+        }
+        #homeIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .bottom-nav {
+            position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+            width:calc(100% - 32px); max-width:400px;
+            background:var(--surface); backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border:1px solid var(--border); border-radius:20px;
+            padding:8px 12px; display:flex; justify-content:space-around;
+            align-items:center; box-shadow:0 8px 24px rgba(0,0,0,0.06);
+            z-index:900; transition:all 0.3s; user-select:none; touch-action:none;
+        }
+        .bottom-nav-item {
+            flex:1; display:flex; flex-direction:column; align-items:center;
+            gap:2px; padding:6px 0; border-radius:16px;
+            color:var(--text-secondary); font-size:0.7rem; font-weight:500;
+            cursor:pointer; transition:color 0.2s, background 0.2s;
+            border:none; background:transparent; position:relative; z-index:1;
+        }
+        .bottom-nav-item .icon { font-size:1.4rem; line-height:1; transition:transform 0.2s; }
+        .bottom-nav-item.active { color:var(--text); }
+
+        .slide-indicator {
+            position:absolute; top:4px; bottom:4px; left:0; width:50%;
+            background:rgba(255,255,255,0.3); backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px); border-radius:16px;
+            transition:transform 0.4s cubic-bezier(0.2,0.9,0.4,1), width 0.4s cubic-bezier(0.2,0.9,0.4,1);
+            box-shadow:0 2px 10px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+            border:1px solid rgba(255,255,255,0.3); pointer-events:none; z-index:0;
+        }
+        .dark-mode .slide-indicator {
+            background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.08);
+            box-shadow:0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .bottom-nav.mode-slide {
+            backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+            background:rgba(255,255,255,0.35); border-radius:24px;
+        }
+        .dark-mode .bottom-nav.mode-slide { background:rgba(15,23,42,0.45); }
+
+        .bottom-nav.mode-slide .slide-indicator {
+            background:rgba(255,255,255,0.25); backdrop-filter:blur(22px);
+            -webkit-backdrop-filter:blur(22px);
+            border:1px solid rgba(255,255,255,0.5);
+            box-shadow:0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+            border-radius:24px;
+        }
+        .dark-mode .bottom-nav.mode-slide .slide-indicator {
+            background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.2);
+            box-shadow:0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        #editModal .modal-sheet {
+            display:flex; flex-direction:column; overflow:hidden;
+        }
+        #editModal .modal-sheet #editModalContent {
+            flex:1; overflow-y:auto;
+        }
+        #editModal .modal-sheet .modal-footer {
+            flex-shrink:0;
+        }
+
+        .profile-card {
+            display:flex; align-items:center; gap:16px;
+            background:var(--surface); border:1px solid var(--border); border-radius:20px;
+            padding:20px; margin-bottom:24px;
+        }
+        .profile-avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:2rem; color:white; }
+        .profile-info { flex:1; }
+        .profile-name { font-size:1.2rem; font-weight:700; margin-bottom:2px; }
+        .profile-bio { font-size:0.85rem; color:var(--text-secondary); }
+        .settings-list { background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+        .settings-item { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; font-size:0.95rem; font-weight:500; }
+        .settings-item:last-child { border-bottom:none; }
+        .settings-item .item-left { display:flex; align-items:center; gap:10px; }
+        .settings-item .item-icon { font-size:1.3rem; }
+
+        .back-btn { width:40px; height:40px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-size:1.3rem; cursor:pointer; color:var(--text); display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+        .back-btn:hover { background:var(--bg); border-color:var(--primary); }
+        .appearance-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+        .appearance-header h2 { font-size:1.2rem; font-weight:700; }
+
+        .entry-btn { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 20px; margin-bottom:12px; cursor:pointer; }
+        .entry-btn:hover { background:var(--bg); }
+        .entry-info { display:flex; flex-direction:column; gap:4px; }
+        .entry-title { font-size:1rem; font-weight:600; }
+        .entry-desc { font-size:0.85rem; color:var(--text-secondary); }
+
+        .tab-switch { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:20px; }
+        .tab-switch button { flex:1; padding:8px 0; border:none; border-radius:10px; font-size:0.9rem; font-weight:500; background:transparent; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; }
+        .tab-switch button.active { background:var(--primary); color:white; }
+
+        .config-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:16px; transition:border-color 0.2s; }
+        .config-card.active-card { border-color:var(--primary); box-shadow:0 0 0 2px rgba(59,130,246,0.15); }
+        .config-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .config-card-title { font-size:1rem; font-weight:700; }
+        .status-badge { font-size:0.75rem; padding:4px 10px; border-radius:20px; background:#dcfce7; color:#166534; }
+        .status-badge.inactive { background:#f1f5f9; color:#64748b; }
+        .dark-mode .status-badge.inactive { background:#334155; color:#94a3b8; }
+        .config-summary { font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px; }
+        .card-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .card-actions button { flex:1; min-width:60px; padding:10px 0; border-radius:10px; font-weight:600; font-size:0.85rem; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer; transition:all 0.15s; }
+        .card-actions button.primary { background:var(--primary); color:white; border-color:var(--primary); }
+        .card-actions button.applied { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+        .dark-mode .card-actions button.applied { background:#064e3b; color:#86efac; border-color:#065f46; }
+        .card-actions button:hover { opacity:0.85; }
+
+        .add-config-btn { width:100%; padding:14px; border:2px dashed var(--border); border-radius:16px; background:transparent; color:var(--text-secondary); font-size:0.95rem; font-weight:500; cursor:pointer; transition:all 0.2s; }
+        .add-config-btn:hover { border-color:var(--primary); color:var(--primary); }
+
+        .custom-section-title { font-size:0.9rem; font-weight:600; color:var(--text-secondary); margin:20px 0 12px 0; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+        .custom-section-title .badge-count { background:var(--border); color:var(--text-secondary); font-size:0.7rem; padding:0 8px; border-radius:12px; font-weight:500; }
+
+        .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:1200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+        .modal-overlay.active { opacity:1; pointer-events:auto; }
+        .modal-sheet { background:var(--surface); width:90%; max-width:480px; border-radius:24px; padding:24px 20px 20px; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); margin:0 16px; position:relative; }
+        .modal-header { margin-bottom:20px; }
+        .modal-header h3 { font-size:1.3rem; font-weight:700; }
+        .modal-header .subtitle { font-size:0.9rem; color:var(--text-secondary); margin-top:2px; }
+        .modal-divider { height:1px; background:var(--border); margin:16px 0; }
+        .modal-list { display:flex; flex-direction:column; gap:10px; }
+        .modal-list button { display:flex; align-items:center; width:100%; padding:14px 20px; border:1px solid var(--border); border-radius:14px; background:var(--surface); color:var(--text); font-size:0.95rem; font-weight:500; cursor:pointer; transition:background 0.15s; }
+        .modal-list button:hover { background:var(--bg); }
+        .modal-close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; position:absolute; right:20px; top:20px; color:var(--text-secondary); }
+
+        .setting-item { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+        .setting-item .label { font-size:0.95rem; font-weight:500; }
+        .setting-item .value { display:flex; align-items:center; gap:8px; font-size:0.9rem; color:var(--text-secondary); }
+        .color-swatch-sm { width:22px; height:22px; border-radius:5px; border:1px solid var(--border); flex-shrink:0; }
+        .toggle-sm { position:relative; width:44px; height:24px; background:var(--toggle-bg); border-radius:12px; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+        .toggle-sm.active { background:var(--primary); }
+        .toggle-sm::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; background:white; border-radius:50%; transition:transform 0.2s; }
+        .toggle-sm.active::after { transform:translateX(20px); }
+        .modal-footer { display:flex; gap:12px; margin-top:24px; }
+        .modal-footer button { flex:1; padding:12px 0; border:none; border-radius:12px; font-weight:600; cursor:pointer; background:var(--surface); color:var(--text); border:1px solid var(--border); }
+        .modal-footer button.primary { background:var(--primary); color:white; border-color:var(--primary); }
+        .option-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:8px; margin:12px 0; }
+        .option-card { padding:10px 6px; border-radius:12px; border:1px solid var(--border); text-align:center; cursor:pointer; font-size:0.8rem; transition:all 0.15s; }
+        .option-card.active { border-color:var(--primary); background:rgba(59,130,246,0.1); }
+        .option-card:hover { border-color:var(--primary); }
+        .option-icon { font-size:1.2rem; display:block; margin-bottom:2px; }
+
+        .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 24px; box-shadow:0 8px 30px rgba(0,0,0,0.15); font-size:0.9rem; font-weight:500; z-index:1300; opacity:0; transition:opacity 0.25s; pointer-events:none; max-width:90%; }
+        .toast.show { opacity:1; }
+
+        /* 帮助弹窗与更新日志弹窗 */
+        .help-modal-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.55); z-index: 1201; display: none;
+            justify-content: center; align-items: center;
+        }
+        .help-modal-overlay.active { display: flex; }
+        .help-modal {
+            background: var(--surface); border-radius:20px;
+            width:680px; max-width:92vw; max-height:85vh; overflow-y:auto;
+            box-shadow:0 20px 60px rgba(0,0,0,0.2);
+            transform:scale(0.9); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+            padding:0;
+        }
+        .help-modal-overlay.active .help-modal { transform: scale(1); }
+        .help-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding:20px 24px 16px; border-bottom:1px solid var(--border);
+            position:sticky; top:0; background: var(--surface);
+            border-radius:20px 20px 0 0; z-index:2;
+        }
+        .help-modal-header h2 { font-size:1.3rem; color: var(--text); margin:0; display:flex; align-items:center; gap:8px; }
+        .help-modal-close {
+            width:36px; height:36px; border-radius:50%; border:none;
+            background: var(--bg); font-size:1.2rem; cursor:pointer;
+            color: var(--text-secondary); display:flex; align-items:center;
+            justify-content:center; transition:all 0.2s; flex-shrink:0;
+        }
+        .help-modal-close:hover { background: var(--border); color: var(--text); }
+        .help-modal-body { padding:20px 24px 24px; }
+        .help-section { margin-bottom:20px; }
+        .help-section:last-child { margin-bottom:0; }
+        .help-section h3 { font-size:1rem; color: var(--text); margin:0 0 8px; display:flex; align-items:center; gap:6px; }
+        .help-section p { font-size:0.9rem; color: var(--text-secondary); line-height:1.6; margin:0 0 6px; padding-left:24px; }
+        .help-tip { background:#fefce8; border-left:3px solid #facc15; padding:8px 14px; border-radius:0 8px 8px 0; font-size:0.85rem; color:#854d0e; margin:8px 0 0 24px; line-height:1.5; }
+        .help-shortcut { display:inline-block; background:#f1f5f9; padding:2px 8px; border-radius:4px; font-family:'Courier New',monospace; font-size:0.8rem; color:#475569; border:1px solid #e2e8f0; margin:0 2px; }
+        .help-divider { border:none; border-top:1px dashed var(--border); margin:16px 0; }
+        .help-warning { background:#fff7ed; border-left:3px solid #f97316; padding:10px 14px; border-radius:0 8px 8px 0; font-size:0.85rem; color:#9a3412; margin:10px 0 0 24px; line-height:1.5; }
+
+        @media (max-width:480px) {
+            .nav-title-text { font-size:1.2rem; }
+            .config-card { padding:16px; }
+            .card-actions button { font-size:0.75rem; padding:8px 0; min-width:50px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="toast-container"></div>
+
+    <nav class="top-nav" id="topNav">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" class="nav-logo" alt="">
+                <div class="nav-title">
+                    <span class="nav-title-text">legado-svg</span>
+                    <span class="nav-update">设置</span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="切换深色模式">
+                    <span class="theme-icon-light">☀️</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </button>
+                <details class="nav-menu">
+                    <summary class="nav-menu-btn" aria-label="菜单">☰</summary>
+                    <div class="nav-dropdown">
+                        <button id="helpBtn">📖 使用说明</button>
+                        <button id="changelogBtn">📋 更新日志</button>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </nav>
 
     <!-- 使用说明弹窗 -->
     <div class="help-modal-overlay" id="helpModalOverlay">
@@ -109,6 +413,10 @@
                     <h3>2026-07-22 (v2.1)</h3>
                     <p>• 修复气泡预览图自适应问题：无论原始气泡尺寸多大，都会完整缩放显示在预览框内，不再出现只显示1/4的情况</p>
                     <p>• 优化预览框 CSS（overflow 改为 hidden），配合 JS 强制设置 SVG 宽高100%及 preserveAspectRatio 属性</p>
+                    <p>• 新增顶部固定导航栏，右侧下拉菜单收纳“使用说明”和“更新日志”入口</p>
+                    <p>• 移除页面外层圆弧卡片，布局更简洁</p>
+                    <p>• 新增日夜切换按钮，支持深色/浅色主题，偏好自动保存</p>
+                    <p>• 下拉面板改为全宽延伸，视觉更统一</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -117,9 +425,9 @@
                     <p>• 新增 <strong>$tccolor 选择弹窗</strong>：导出时需至少选择一个形状作为 $tccolor 变量，勾选后预览图会显示智能斜线标记（深色填充用白线，浅色填充用黑线）</p>
                     <p>• 导出流程优化：先选择 $tccolor，再确认是否保留变量，最后进入导出选项</p>
                     <p>• 填充颜色区域增加滚动限制（超过300px可滚动），$tccolor选择弹窗同理</p>
-                    <p>• 晋江格式文字固定为"数量"，导出不再询问</p>
+                    <p>• 晋江格式文字固定为“数量”，导出不再询问</p>
                     <p>• 变量标注灰色小字固定显示变量名，不随颜色变化</p>
-                    <p>• 移除独立的"保留修改"按钮，功能完全整合进导出按钮</p>
+                    <p>• 移除独立的“保留修改”按钮，功能完全整合进导出按钮</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -136,8 +444,8 @@
                     <h3>2026-07-12</h3>
                     <p>• 新增颜色预览和取色器，支持快速选色</p>
                     <p>• 气泡预览输入栏统一宽度，预览图 sticky 定位</p>
-                    <p>• 新增"转为晴天格式"，自动替换颜色变量并居中文字</p>
-                    <p>• "转为阅读格式"更名为"转为晋江格式"</p>
+                    <p>• 新增“转为晴天格式”，自动替换颜色变量并居中文字</p>
+                    <p>• “转为阅读格式”更名为“转为晋江格式”</p>
                     <p>• 格式转换不再覆盖输入框，避免误操作</p>
                     <p>• 字体粗细控件在晴天模式下可见，透明度输入栏添加提示</p>
                     <p>• 使用说明更新，补充字体粗细等参数要求</p>
@@ -145,7 +453,7 @@
                     <p>• 界面新增更新日志按钮及更新时间显示</p>
                     <p>• 修复使用说明按钮点击后蓝色方块残留</p>
                     <p>• 新增描边旋转和文字旋转控件，支持动态预览</p>
-                    <p>• 新增"📌 固定"按钮，解决键盘弹出时预览图跟随滚动问题</p>
+                    <p>• 新增“📌 固定”按钮，解决键盘弹出时预览图跟随滚动问题</p>
                     <p>• 预览图固定后右上角显示关闭按钮，点击即可解除固定</p>
                 </div>
                 <hr class="help-divider">
@@ -161,242 +469,924 @@
         </div>
     </div>
 
-    <!-- SVG预览弹窗 -->
-    <div class="modal-overlay fullscreen" id="svgModal">
-        <div class="modal-content">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 12px;">
-                <h2 style="margin:0;">🔍 SVG 预览</h2>
-                <button id="closeModalBtn" style="background:none;border:none;font-size:1.8rem;cursor:pointer;color:#94a3b8;">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody" style="min-height:400px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;"></div>
+    <div class="main-content" id="viewContainer">
+        <div class="view active" id="viewHome">
+            <iframe id="homeIframe" src="app.html" allow="clipboard-write"></iframe>
         </div>
-    </div>
 
-    <!-- 图片转SVG / SVG压缩 共用弹窗 -->
-    <div class="modal-overlay drawer" id="toSvgModal">
-        <div class="modal-content" id="drawerContent">
-            <div class="drawer-handle" id="drawerHandle"></div>
-            <div class="modal-body" id="toSvgModalBody">
-                <iframe src="" loading="lazy"></iframe>
-                <div class="loading-overlay" id="toSvgLoading">
-                    <div class="loading-spinner"></div>
-                    <div>⏳ 正在加载工具...</div>
+        <div class="view" id="viewProfile">
+            <div class="profile-card">
+                <div class="profile-avatar">😊</div>
+                <div class="profile-info">
+                    <div class="profile-name">legado 用户</div>
+                    <div class="profile-bio">自定义你的阅读气泡与导航栏</div>
+                </div>
+            </div>
+            <div class="settings-list">
+                <div class="settings-item" id="openAppearanceBtn">
+                    <div class="item-left">
+                        <span class="item-icon">🎨</span>
+                        <span>外观设置</span>
+                    </div>
+                    <span style="color:var(--text-secondary);">›</span>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- 导出气泡格式弹窗 -->
-    <div class="export-modal-overlay" id="exportModalOverlay">
-        <div class="export-modal" id="exportModal">
-            <div class="export-modal-header">
-                <h3>📦 导出气泡格式</h3>
-                <button class="export-modal-close" id="exportModalClose">&times;</button>
+        <div class="view" id="viewAppearance">
+            <div class="appearance-header">
+                <button class="back-btn" id="backFromAppearance">←</button>
+                <h2>外观设置</h2>
             </div>
-            <div class="export-modal-body">
-                <button class="export-option-btn" id="exportCopyCodeBtn">
-                    <span class="option-icon">📋</span>
-                    <span class="option-info"><span class="option-title">复制代码</span><span class="option-desc">将SVG代码复制到剪贴板</span></span>
-                </button>
-                <button class="export-option-btn" id="exportTxtBtn">
-                    <span class="option-icon">📄</span>
-                    <span class="option-info"><span class="option-title">导出 TXT 文件</span><span class="option-desc">下载为 .txt 文本文件</span></span>
-                </button>
-                <button class="export-option-btn" id="exportSvgBtn">
-                    <span class="option-icon">🎨</span>
-                    <span class="option-info"><span class="option-title">导出 SVG 文件</span><span class="option-desc">下载为 .svg 矢量图文件</span></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 保留修改确认弹窗 -->
-    <div class="help-modal-overlay" id="keepModifiedModalOverlay">
-        <div class="help-modal" id="keepModifiedModal">
-            <div class="help-modal-header">
-                <h2>⚠️ 保留修改确认</h2>
-                <button class="help-modal-close" id="keepModifiedModalClose">&times;</button>
-            </div>
-            <div class="help-modal-body">
-                <p style="margin-bottom:12px;">以下变量将被写入实际值（若取消则继续使用变量名）：</p>
-                <div id="keepModifiedTable"></div>
-                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-                    <button id="keepModifiedConfirmBtn" class="btn-apply" style="padding:8px 20px;">确认保留</button>
-                    <button id="keepModifiedCancelBtn" class="cp-btn-close" style="padding:8px 20px; background:#f1f5f9; color:#475569;">取消（使用变量）</button>
+            <div class="entry-btn" id="topBarEntry">
+                <div class="entry-info">
+                    <span class="entry-title">🔝 顶部操作栏</span>
+                    <span class="entry-desc">自定义导航栏日间/夜间及更多样式</span>
                 </div>
+                <span style="color:var(--text-secondary);">›</span>
             </div>
-        </div>
-    </div>
-
-    <!-- 主容器 -->
-    <div class="container">
-        <h1>
-            <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" style="width:1.2em; height:1.2em; vertical-align:middle; margin-right:4px;" alt="">legado-svg
-            <span class="update-time">更新于 2026-07-22</span>
-            <button class="help-btn" id="helpBtn">📖 使用说明</button>
-            <button class="help-btn" id="changelogBtn">📋 更新日志</button>
-        </h1>
-
-        <div class="input-tabs" id="inputTabs">
-            <button class="input-tab active" id="codeTabBtn" data-mode="code">✏️ 输入代码</button>
-            <button class="input-tab" id="uploadTabBtn" data-mode="upload">📁 上传SVG文件</button>
-            <button class="input-tab" id="imageTabBtn" data-mode="image">📷 上传图片</button>
-        </div>
-
-        <textarea id="codeInput" placeholder="在此粘贴你的代码……"></textarea>
-
-        <div id="uploadZone" class="upload-zone hidden">
-            <span class="upload-icon">📤</span>
-            <span class="upload-label">点击选择或拖拽 SVG 文件到此处</span>
-            <span class="upload-hint">支持 .svg / .txt / .html / .xml 等文本文件</span>
-            <span class="upload-loading">⏳ 正在读取文件…</span>
-            <input type="file" id="fileInput" accept=".svg,.txt,.html,.htm,.xml,.css,.js,text/*,image/svg+xml">
-        </div>
-
-        <div id="imageUploadZone" class="upload-zone hidden">
-            <span class="upload-icon">🖼️</span>
-            <span class="upload-label">点击选择或拖拽图片到此处</span>
-            <span class="upload-hint">支持 JPG、PNG、GIF、WebP 等常见格式</span>
-            <span class="upload-loading">⏳ 正在处理图片…</span>
-            <input type="file" id="imageFileInput" accept="image/*">
-        </div>
-
-        <div class="actions">
-            <div class="actions-row extract-row"><button id="extractBtn" class="primary">🔍 提取所有颜色</button></div>
-            <div class="actions-row">
-                <button id="clearBtn" class="secondary" style="flex:1;">🗑️ 清空</button>
-                <button id="copyCodeBtn" class="secondary" style="flex:1;">📄 复制代码</button>
-            </div>
-            <div class="actions-row"><button id="previewSvgBtn" class="secondary" style="flex:1;">🖼️ 预览 SVG</button></div>
-            <div class="actions-row">
-                <button id="sunnyFormatBtn" class="secondary" style="flex:1;">☀️ 转为晴天格式</button>
-                <button id="convertReadingBtn" class="secondary" style="flex:1;">📐 转为晋江格式</button>
-            </div>
-            <div class="actions-row tool-full-row">
-                <div class="btn-group tool-btn-group" id="toolGroup">
-                    <button id="toolToggleBtn" class="secondary tool-toggle-btn">🔧 工具 <span class="arrow">▾</span></button>
-                    <div class="picker-row"><button id="colorPickerToolBtn" class="secondary" style="width:100%;">🎨 取色器</button></div>
-                    <div class="sub-row" id="subRow">
-                        <button id="toSvgBtn" class="secondary">🔄 图片转 SVG</button>
-                        <button id="customLinkBtn" class="secondary">🔗 自定义链接</button>
-                    </div>
-                    <div class="sub-row bubble-sub-row" id="bubbleSubRow">
-                        <button id="bubbleIconBtn" class="secondary">🎈 气泡图标</button>
-                        <button id="bubbleIconCustomLinkBtn" class="secondary">🔗 自定义链接</button>
-                    </div>
-                    <div class="sub-row compress-sub-row" id="compressSubRow">
-                        <button id="compressBtn" class="secondary">🗜️ SVG 压缩</button>
-                        <button id="compressCustomLinkBtn" class="secondary">🔗 自定义链接</button>
-                    </div>
+            <div class="entry-btn" id="bottomBarEntry">
+                <div class="entry-info">
+                    <span class="entry-title">🔽 底部操作栏</span>
+                    <span class="entry-desc">自定义底部导航栏样式</span>
                 </div>
+                <span style="color:var(--text-secondary);">›</span>
             </div>
         </div>
 
-        <div id="resultContainer">
-            <div id="statsAndTools" class="hidden">
-                <div class="stats">共 <span id="colorCount">0</span> 个颜色（去重）</div>
-                <div class="toolbar">
-                    <div class="toolbar-row"><button id="selectAllBtn">✅ 全选</button><button id="deselectAllBtn">⬜ 取消全选</button></div>
-                    <div class="toolbar-row"><button id="copyColorBtn">📋 复制颜色</button><span id="selectedCount">已选 0 个</span></div>
-                </div>
+        <div class="view" id="viewTopBarSettings">
+            <div class="appearance-header">
+                <button class="back-btn" id="backFromTopBar">←</button>
+                <h2>顶部操作栏</h2>
             </div>
-            <div id="resultDisplay"><div class="empty-state">等待提取…</div></div>
-            <div id="replaceArea" class="hidden">
-                <div class="replace-area">
-                    <label>替换为：<span class="color-preview" id="replaceColorPreview"></span><input type="color" id="replaceColorPicker" class="color-picker" style="display:none;"><input type="text" id="replaceInput" placeholder="#000000 或 空" style="width:110px;"></label>
-                    <button id="replaceBtn">⚡ 替换选中的颜色</button><span id="replaceStatus"></span>
-                </div>
+            <div class="tab-switch" id="topTabSwitch">
+                <button data-mode="day" class="active">☀️ 日间主题</button>
+                <button data-mode="night">🌙 夜间模式</button>
             </div>
+            <div id="topActiveModeCard"></div>
+            <button class="add-config-btn" id="topAddConfigBtn">＋ 添加配置</button>
         </div>
 
-        <div id="bubbleSection" class="hidden">
-            <div class="bubble-header">
-                <h2 id="bubbleTitle">
-                    <span id="bubbleTitleText">🎈 气泡预览</span>
-                    <button id="pinPreviewBtn" style="font-size:0.75rem; padding:2px 10px; border-radius:14px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; cursor:pointer; transition:all 0.2s; margin-left:8px;">📌 固定</button>
-                </h2>
-                <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
+        <div class="view" id="viewBottomBarSettings">
+            <div class="appearance-header">
+                <button class="back-btn" id="backFromBottomBar">←</button>
+                <h2>底部操作栏</h2>
             </div>
-            <div class="bubble-preview-container">
-                <!-- 移除了内联的 overflow: visible，改用 CSS 控制 -->
-                <!-- 确认此处无 style="overflow:visible" -->
-<div class="preview-box" id="bubblePreviewBox">
-    <button id="closePinBtn" class="close-pin-btn" title="解除固定">✕</button>
-</div>
-                <div class="bubble-controls" id="bubbleControls">
-                    <div class="control-section-title">📍 文字位置</div>
-                    <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
-                    <div class="control-row"><label>Y 坐标</label><input type="number" id="textY" value="630" step="1" style="width:160px;"></div>
-
-                    <div class="control-section-title">🔤 文字样式</div>
-                    <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
-                    <div class="control-row">
-                        <label>字体颜色</label>
-                        <span class="color-preview" id="textFillPreview"></span>
-                        <input type="color" id="textFillPicker" class="color-picker" style="display:none;">
-                        <input type="text" id="textFill" value="字" placeholder="字" style="width:130px;">
-                    </div>
-                    <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
-                    <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
-
-                    <div class="control-section-title">💬 文本内容</div>
-                    <div class="control-row"><label>文本内容</label><input type="text" id="textContent" value="927" placeholder="预览文本" style="width:160px;"></div>
-
-                    <div class="control-section-title">🎨 填充颜色</div>
-                    <div id="fillPerShapeContainer"></div>
-
-                    <div class="control-section-title">✏️ 描边样式</div>
-                    <div class="control-row"><label>描边粗细</label><input type="number" id="strokeWidth" value="6" step="0.5" min="0" style="width:160px;"></div>
-                    <div class="control-row">
-                        <label>描边颜色</label>
-                        <span class="color-preview" id="strokeColorPreview"></span>
-                        <input type="color" id="strokeColorPicker" class="color-picker" style="display:none;">
-                        <input type="text" id="strokeColorInput" value="#000000" placeholder="#000000" style="width:130px;">
-                    </div>
-                    <div class="control-row"><label>描边透明度</label><input type="number" id="strokeOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
-
-                    <div class="control-section-title sunny-only" style="display:none;">🎨 晴天填充</div>
-                    <div class="control-row sunny-only" style="display:none;">
-                        <label>填充颜色</label>
-                        <span class="color-preview" id="fillColorPreview"></span>
-                        <input type="color" id="fillColorPicker" class="color-picker" style="display:none;">
-                        <input type="text" id="fillColorInput" value="#ffffff" placeholder="#ffffff" style="width:130px;">
-                    </div>
-                    <div class="control-row"><label>填充透明度</label><input type="number" id="fillOpacity" value="1" step="0.1" min="0" max="1" placeholder="0~1" style="width:160px;"></div>
-
-                    <div class="control-section-title">🔄 旋转</div>
-                    <div class="control-row"><label>描边旋转</label><input type="number" id="rotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
-                    <div class="control-row"><label>文字旋转</label><input type="number" id="textRotateAngle" value="0" step="0.5" placeholder="-360~360" style="width:160px;"></div>
-
-                    <div class="control-section-title">🖼️ 画布背景</div>
-                    <div class="control-row">
-                        <label>画布背景</label>
-                        <span class="color-preview" id="bgColorPreview"></span>
-                        <input type="color" id="bgColorPicker" class="color-picker" style="display:none;">
-                        <input type="text" id="bgColor" value="transparent" placeholder="transparent / #ffffff" style="width:130px;">
-                        <button id="applyBgColorBtn" class="btn-apply" style="padding:6px 14px; font-size:0.85rem;">应用</button>
-                    </div>
-
-                    <div class="control-row" id="keepModifiedRow" style="display:none;">
-                        <button id="keepModifiedBtn" class="btn-apply" style="padding:6px 14px; font-size:0.85rem; margin-left:0;">保留修改</button>
-                    </div>
-
-                    <div class="bubble-actions">
-                        <button id="applyBubbleBtn" class="btn-apply">⟳ 更新预览</button>
-                        <button id="exportBubbleBtn" class="btn-export">📋 导出气泡格式</button>
-                    </div>
-                </div>
+            <div class="tab-switch" id="bottomTabSwitch">
+                <button data-mode="day" class="active">☀️ 日间主题</button>
+                <button data-mode="night">🌙 夜间模式</button>
             </div>
-            <div class="bubble-code-output" id="bubbleCodeOutput"></div>
+            <div id="bottomActiveModeCard"></div>
+            <button class="add-config-btn" id="bottomAddConfigBtn">＋ 添加配置</button>
         </div>
     </div>
 
-    <!-- 回到顶端 / 到底端 悬浮按钮 -->
-    <div id="float-buttons">
-        <button id="btn-to-top" title="回到顶端">⬆</button>
-        <button id="btn-to-bottom" title="到底端">⬇</button>
+    <!-- 底部导航栏（含滑块） -->
+    <div class="bottom-nav" id="bottomNav">
+        <div class="slide-indicator" id="slideIndicator"></div>
+        <button class="bottom-nav-item active" data-view="home"><span class="icon">🏠</span><span>主页</span></button>
+        <button class="bottom-nav-item" data-view="profile"><span class="icon">👤</span><span>我的</span></button>
     </div>
 
-    <script src="script.js"></script>
+    <div class="modal-overlay" id="addConfigModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>添加配置</h3>
+                <button class="modal-close-btn" id="closeAddModalBtn">&times;</button>
+            </div>
+            <div class="modal-list">
+                <button id="manualConfigBtn">✋ 手动配置</button>
+                <button id="importConfigBtn">📥 导入</button>
+                <input type="file" id="importFileInput" style="display:none;" accept=".json">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>编辑</h3>
+                <div class="subtitle" id="editModalSubtitle">自定义配置</div>
+                <div class="modal-divider"></div>
+            </div>
+            <div id="editModalContent"></div>
+            <div class="modal-footer">
+                <button id="editModalCancel">取消</button>
+                <button class="primary" id="editModalApply">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="moreModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="moreModalTitle">更多操作</h3>
+                <button class="modal-close-btn" id="closeMoreModalBtn">&times;</button>
+            </div>
+            <div class="modal-list" id="moreModalList"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="subPickerModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="subPickerTitle">选择</h3>
+            </div>
+            <div id="subPickerContent"></div>
+            <div class="modal-footer">
+                <button id="subPickerCancel">取消</button>
+                <button class="primary" id="subPickerApply">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        (function() {
+            // ---------- 主题切换 ----------
+            var themeBtn = document.getElementById('themeToggleBtn');
+            var DARK_KEY = 'legado-svg-dark-mode';
+
+            function applyDark(d) { document.body.classList.toggle('dark-mode', d); }
+            var savedDark = localStorage.getItem(DARK_KEY);
+            if (savedDark === 'true') applyDark(true);
+            else if (savedDark === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyDark(true);
+            
+            themeBtn.addEventListener('click', function() {
+                var isDark = document.body.classList.toggle('dark-mode');
+                localStorage.setItem(DARK_KEY, isDark);
+                // 同步 iframe 深色模式
+                var iframe = document.getElementById('homeIframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ type: 'darkMode', isDark: isDark }, '*');
+                }
+            });
+
+            // ---------- 预设数据 ----------
+            var texturePresets = [
+                { name: '磨砂', icon: '🌫️', blur: true, blurAmt: 8, opac: 0.8, bg: 'transparent', txt: '#0f172a', bdr: '#e2e8f0' },
+                { name: '高透玻璃', icon: '🪟', blur: true, blurAmt: 12, opac: 0.5, bg: 'transparent', txt: '#0f172a', bdr: '#cbd5e1' },
+                { name: '弥散渐变', icon: '🌈', blur: true, blurAmt: 10, opac: 0.7, bg: 'transparent', txt: '#1e293b', bdr: '#dbeafe' },
+                { name: '纯透明', icon: '💎', blur: false, blurAmt: 0, opac: 0, bg: 'transparent', txt: '#0f172a', bdr: 'transparent' },
+                { name: '新拟态', icon: '🪨', blur: false, blurAmt: 0, opac: 1, bg: '#f1f5f9', txt: '#0f172a', bdr: '#e2e8f0' },
+                { name: '金属拉丝', icon: '🔩', blur: false, blurAmt: 0, opac: 1, bg: '#e2e8f0', txt: '#0f172a', bdr: '#94a3b8' },
+                { name: '水晶琉璃', icon: '🔮', blur: true, blurAmt: 14, opac: 0.4, bg: 'transparent', txt: '#0f172a', bdr: '#bae6fd' },
+                { name: '霓虹光效', icon: '💡', blur: true, blurAmt: 6, opac: 0.7, bg: 'transparent', txt: '#0f172a', bdr: '#3b82f6', shadow: 0.4 },
+                { name: '流光渐变', icon: '🌊', blur: true, blurAmt: 8, opac: 0.6, bg: 'transparent', txt: '#0f172a', bdr: '#7dd3fc' },
+                { name: '哑光杂色', icon: '📎', blur: false, blurAmt: 0, opac: 1, bg: '#f8fafc', txt: '#0f172a', bdr: '#e2e8f0' },
+                { name: '皮革纹理', icon: '🧵', blur: false, blurAmt: 0, opac: 1, bg: '#d4c5b9', txt: '#2d1c15', bdr: '#a89b8c' }
+            ];
+            var topLayoutPresets = [
+                { name: '默认', icon: '📏', borderRadius: 0, shadow: 0 },
+                { name: '悬浮岛屿', icon: '🏝️', borderRadius: 16, shadow: 0.3 },
+                { name: '胶囊按钮', icon: '💊', borderRadius: 30, shadow: 0.15 }
+            ];
+            var bottomLayoutPresets = [
+                { name: '常规等分', icon: '📐', borderRadius: 0, shadow: 0, style: 'full' },
+                { name: '悬浮胶囊', icon: '💊', borderRadius: 20, shadow: 0.2, style: 'capsule' },
+                { name: '滑动吸附', icon: '📌', borderRadius: 24, shadow: 0.1, style: 'sticky' }
+            ];
+            var slideAnimPresets = [
+                { name: '平滑', icon: '〰️', transition: 'transform 0.4s cubic-bezier(0.2,0.9,0.4,1), width 0.4s cubic-bezier(0.2,0.9,0.4,1)' },
+                { name: '弹性', icon: '🐇', transition: 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), width 0.35s cubic-bezier(0.34,1.56,0.64,1)' },
+                { name: '线性', icon: '➖', transition: 'transform 0.3s linear, width 0.3s linear' },
+                { name: '缓入缓出', icon: '🔄', transition: 'transform 0.35s ease-in-out, width 0.35s ease-in-out' },
+                { name: '快速', icon: '⚡', transition: 'transform 0.2s ease, width 0.2s ease' }
+            ];
+
+            function defaultSettings(barType) {
+                return {
+                    blurEnabled: true,
+                    blurAmount: 8,
+                    opacity: 0.85,
+                    bgColor: 'transparent',
+                    textColor: '#0f172a',
+                    borderColor: '#e2e8f0',
+                    borderRadius: 0,
+                    shadowOpacity: 0,
+                    _textureName: '磨砂',
+                    _layoutName: barType === 'bottom' ? '悬浮胶囊' : '默认',
+                    _slideAnimation: '平滑'
+                };
+            }
+
+            // ---------- 存储结构 ----------
+            var STORAGE_KEY = 'legado-svg-nav-settings-v9';
+            var defaultData = function() {
+                return {
+                    top: {
+                        currentTab: 'day',
+                        day: { settings: defaultSettings('top'), customConfigs: [], activeConfigId: 'day', customCounter: 0 },
+                        night: { settings: defaultSettings('top'), customConfigs: [], activeConfigId: 'night', customCounter: 0 }
+                    },
+                    bottom: {
+                        currentTab: 'day',
+                        day: { settings: defaultSettings('bottom'), customConfigs: [], activeConfigId: 'day', customCounter: 0 },
+                        night: { settings: defaultSettings('bottom'), customConfigs: [], activeConfigId: 'night', customCounter: 0 }
+                    }
+                };
+            };
+
+            var data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (!data || !data.top || !data.top.day || !data.top.day.customConfigs) {
+                data = defaultData();
+            }
+            if (!data.top.currentTab) data.top.currentTab = 'day';
+            if (!data.bottom.currentTab) data.bottom.currentTab = 'day';
+
+            function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+            function getBarData(barType) { return barType === 'top' ? data.top : data.bottom; }
+            function getCurrentThemeData(barType) {
+                var bar = getBarData(barType);
+                var tab = bar.currentTab || 'day';
+                return tab === 'day' ? bar.day : bar.night;
+            }
+            function getConfigById(barType, configId) {
+                var theme = getCurrentThemeData(barType);
+                if (configId === 'day' || configId === 'night') return theme.settings;
+                var found = theme.customConfigs.find(function(c) { return c.id === configId; });
+                return found ? found.settings : null;
+            }
+            function getConfigName(barType, configId) {
+                if (configId === 'day') return '日间主题';
+                if (configId === 'night') return '夜间模式';
+                var theme = getCurrentThemeData(barType);
+                var found = theme.customConfigs.find(function(c) { return c.id === configId; });
+                return found ? found.name : configId;
+            }
+            function getConfigFull(barType, configId) {
+                var theme = getCurrentThemeData(barType);
+                if (configId === 'day') return { id: 'day', name: '日间主题', settings: theme.settings, isDefault: true };
+                if (configId === 'night') return { id: 'night', name: '夜间模式', settings: theme.settings, isDefault: true };
+                var found = theme.customConfigs.find(function(c) { return c.id === configId; });
+                return found ? { id: found.id, name: found.name, settings: found.settings, isDefault: false } : null;
+            }
+
+            // ---------- 应用顶部样式 ----------
+            function applyTopSettings(settings) {
+                var nav = document.getElementById('topNav');
+                if (!nav || !settings) return;
+                if (settings.bgColor === 'transparent') nav.style.backgroundColor = 'transparent';
+                else {
+                    var hex = settings.bgColor;
+                    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+                    nav.style.backgroundColor = 'rgba('+r+','+g+','+b+','+settings.opacity+')';
+                }
+                nav.style.backdropFilter = settings.blurEnabled ? 'blur('+settings.blurAmount+'px)' : 'none';
+                nav.style.webkitBackdropFilter = nav.style.backdropFilter;
+                nav.style.borderBottomColor = settings.borderColor;
+                nav.style.borderRadius = settings.borderRadius + 'px';
+                nav.style.boxShadow = settings.shadowOpacity > 0 ? '0 4px 12px rgba(0,0,0,'+(settings.shadowOpacity*0.2)+')' : 'none';
+                var txt = document.querySelector('.nav-title-text');
+                if (txt) txt.style.color = settings.textColor;
+            }
+
+            // ---------- 底部滑块交互 ----------
+            var sliderEnabled = false;
+            var sliderEl = document.getElementById('slideIndicator');
+            var bottomNav = document.getElementById('bottomNav');
+            var isDragging = false, dragStartX = 0, activeIndex = 0;
+
+            function updateSliderPosition() {
+                if (!sliderEl) return;
+                var items = bottomNav.querySelectorAll('.bottom-nav-item');
+                var activeIdx = 0;
+                items.forEach(function(item, i) { if (item.classList.contains('active')) activeIdx = i; });
+                activeIndex = activeIdx;
+                var activeItem = items[activeIdx];
+                if (!activeItem) return;
+                var navRect = bottomNav.getBoundingClientRect();
+                var itemRect = activeItem.getBoundingClientRect();
+                var offsetX = itemRect.left - navRect.left;
+                var width = itemRect.width;
+                var sliderWidth = width - 4;
+                sliderEl.style.width = sliderWidth + 'px';
+                var leftPos = offsetX + (width - sliderWidth) / 2;
+                sliderEl.style.transform = 'translateX(' + leftPos + 'px)';
+            }
+
+            function setActiveIndex(index) {
+                var items = bottomNav.querySelectorAll('.bottom-nav-item');
+                items.forEach(function(item, i) {
+                    if (i === index) item.classList.add('active');
+                    else item.classList.remove('active');
+                });
+                if (items[index]) switchView(items[index].dataset.view);
+                updateSliderPosition();
+            }
+
+            function enableSlider(enable) {
+                if (enable === sliderEnabled) return;
+                sliderEnabled = enable;
+                if (enable) {
+                    bottomNav.classList.add('mode-slide');
+                    sliderEl.style.display = 'block';
+                    updateSliderPosition();
+                    bottomNav.addEventListener('touchstart', onTouchStart, { passive: false });
+                    bottomNav.addEventListener('touchmove', onTouchMove, { passive: false });
+                    bottomNav.addEventListener('touchend', onTouchEnd);
+                    bottomNav.addEventListener('mousedown', onMouseDown);
+                } else {
+                    bottomNav.classList.remove('mode-slide');
+                    sliderEl.style.display = 'none';
+                    bottomNav.removeEventListener('touchstart', onTouchStart);
+                    bottomNav.removeEventListener('touchmove', onTouchMove);
+                    bottomNav.removeEventListener('touchend', onTouchEnd);
+                    bottomNav.removeEventListener('mousedown', onMouseDown);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+            }
+
+            function onTouchStart(e) { if (!sliderEnabled) return; dragStartX = e.touches[0].clientX; isDragging = true; }
+            function onTouchMove(e) {
+                if (!isDragging || !sliderEnabled) return;
+                e.preventDefault();
+                var deltaX = e.touches[0].clientX - dragStartX;
+                var navWidth = bottomNav.getBoundingClientRect().width;
+                var percent = deltaX / navWidth;
+                percent = Math.max(-1, Math.min(1, percent));
+                var targetIdx = percent < -0.3 ? 0 : (percent > 0.3 ? 1 : activeIndex);
+                if (targetIdx !== activeIndex) { setActiveIndex(targetIdx); dragStartX = e.touches[0].clientX; }
+            }
+            function onTouchEnd() { isDragging = false; }
+
+            var mouseDown = false, mouseStartX = 0;
+            function onMouseDown(e) {
+                if (!sliderEnabled) return;
+                mouseDown = true; mouseStartX = e.clientX;
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                e.preventDefault();
+            }
+            function onMouseMove(e) {
+                if (!mouseDown || !sliderEnabled) return;
+                var deltaX = e.clientX - mouseStartX;
+                var navWidth = bottomNav.getBoundingClientRect().width;
+                var percent = deltaX / navWidth;
+                percent = Math.max(-1, Math.min(1, percent));
+                var targetIdx = percent < -0.3 ? 0 : (percent > 0.3 ? 1 : activeIndex);
+                if (targetIdx !== activeIndex) { setActiveIndex(targetIdx); mouseStartX = e.clientX; }
+            }
+            function onMouseUp() { mouseDown = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
+            function handleResize() { if (sliderEnabled) updateSliderPosition(); }
+
+            // ---------- 应用底部设置 ----------
+            function applyBottomSettings(settings) {
+                var bar = document.getElementById('bottomNav');
+                if (!bar || !settings) return;
+
+                bar.style.bottom = '16px';
+                var layout = bottomLayoutPresets.find(function(l) { return l.name === settings._layoutName; });
+                if (layout && layout.style === 'full') {
+                    bar.style.left = '0'; bar.style.transform = 'none';
+                    bar.style.width = '100%'; bar.style.maxWidth = '100%';
+                    bar.style.borderRadius = '0px';
+                    enableSlider(false);
+                } else {
+                    bar.style.left = '50%'; bar.style.transform = 'translateX(-50%)';
+                    bar.style.width = 'calc(100% - 32px)'; bar.style.maxWidth = '400px';
+                    if (layout && layout.style === 'sticky') {
+                        bar.style.borderRadius = '24px';
+                        enableSlider(true);
+                    } else {
+                        bar.style.borderRadius = '20px';
+                        enableSlider(false);
+                    }
+                }
+
+                if (layout && layout.style === 'sticky') {
+                    if (settings.bgColor === 'transparent') bar.style.backgroundColor = '';
+                    else {
+                        var hex = settings.bgColor;
+                        var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+                        bar.style.backgroundColor = 'rgba('+r+','+g+','+b+','+settings.opacity+')';
+                    }
+                } else {
+                    if (settings.bgColor === 'transparent') bar.style.backgroundColor = 'transparent';
+                    else {
+                        var hex = settings.bgColor;
+                        var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+                        bar.style.backgroundColor = 'rgba('+r+','+g+','+b+','+settings.opacity+')';
+                    }
+                }
+
+                bar.style.backdropFilter = settings.blurEnabled ? 'blur('+settings.blurAmount+'px)' : 'none';
+                bar.style.webkitBackdropFilter = bar.style.backdropFilter;
+                bar.style.borderColor = settings.borderColor;
+                bar.style.boxShadow = settings.shadowOpacity > 0 ? '0 8px 24px rgba(0,0,0,'+(settings.shadowOpacity*0.3)+')' : 'none';
+                bar.style.bottom = '16px';
+
+                if (settings._slideAnimation && sliderEl) {
+                    var animPreset = slideAnimPresets.find(function(a) { return a.name === settings._slideAnimation; });
+                    if (animPreset) sliderEl.style.transition = animPreset.transition;
+                }
+            }
+
+            // ---------- 视图切换 ----------
+            var views = {
+                home: document.getElementById('viewHome'),
+                profile: document.getElementById('viewProfile'),
+                appearance: document.getElementById('viewAppearance'),
+                topBar: document.getElementById('viewTopBarSettings'),
+                bottomBar: document.getElementById('viewBottomBarSettings')
+            };
+
+            function switchView(name) {
+                Object.keys(views).forEach(function(k) { views[k].classList.remove('active'); });
+                views[name].classList.add('active');
+                if (name === 'home' || name === 'profile') {
+                    var items = bottomNav.querySelectorAll('.bottom-nav-item');
+                    items.forEach(function(item) {
+                        if (item.dataset.view === name) item.classList.add('active');
+                        else item.classList.remove('active');
+                    });
+                    if (sliderEnabled) updateSliderPosition();
+                }
+                bottomNav.style.display = 'flex';
+            }
+
+            bottomNav.addEventListener('click', function(e) {
+                var item = e.target.closest('.bottom-nav-item');
+                if (!item) return;
+                var view = item.dataset.view;
+                if (view) {
+                    var items = bottomNav.querySelectorAll('.bottom-nav-item');
+                    items.forEach(function(it, i) {
+                        if (it === item) { it.classList.add('active'); activeIndex = i; }
+                        else it.classList.remove('active');
+                    });
+                    switchView(view);
+                    if (sliderEnabled) updateSliderPosition();
+                }
+            });
+
+            document.getElementById('openAppearanceBtn').addEventListener('click', function() { switchView('appearance'); });
+            document.getElementById('backFromAppearance').addEventListener('click', function() { switchView('profile'); });
+            document.getElementById('topBarEntry').addEventListener('click', function() { switchView('topBar'); renderActiveModeCard('top'); });
+            document.getElementById('bottomBarEntry').addEventListener('click', function() { switchView('bottomBar'); renderActiveModeCard('bottom'); });
+            document.getElementById('backFromTopBar').addEventListener('click', function() { switchView('appearance'); });
+            document.getElementById('backFromBottomBar').addEventListener('click', function() { switchView('appearance'); });
+
+            var toastEl = document.getElementById('toast');
+            var toastTimer = null;
+            function showToast(msg) {
+                toastEl.textContent = msg; toastEl.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
+            }
+
+            // ---------- 渲染配置卡片 ----------
+            function renderActiveModeCard(barType) {
+                var containerId = barType === 'top' ? 'topActiveModeCard' : 'bottomActiveModeCard';
+                var container = document.getElementById(containerId);
+                if (!container) return;
+
+                var bar = getBarData(barType);
+                var currentTab = bar.currentTab || 'day';
+                var theme = currentTab === 'day' ? bar.day : bar.night;
+                var activeId = theme.activeConfigId || currentTab;
+                var presetSettings = theme.settings;
+                var presetName = (currentTab === 'day') ? '日间主题' : '夜间模式';
+                var isPresetActive = (activeId === currentTab);
+
+                var layoutPresets = barType === 'top' ? topLayoutPresets : bottomLayoutPresets;
+                var presetLayoutName = presetSettings._layoutName || (barType === 'bottom' ? '悬浮胶囊' : '默认');
+
+                var html = '<div class="config-card '+(isPresetActive?'active-card':'')+'">';
+                html += '<div class="config-card-header"><span class="config-card-title">'+presetName+' <span style="font-size:0.7rem;font-weight:400;color:var(--text-secondary);">(预设)</span></span>';
+                html += '<span class="status-badge '+(isPresetActive?'':'inactive')+'">'+(isPresetActive?'已应用':'未应用')+'</span></div>';
+                html += '<div class="config-summary">'+presetSettings._textureName+' / '+presetLayoutName+'</div>';
+                html += '<div class="card-actions"><button class="apply-btn primary '+(isPresetActive?'applied':'')+'" data-bar="'+barType+'" data-id="'+currentTab+'">'+(isPresetActive?'已应用':'应用')+'</button>';
+                html += '<button class="more-btn" data-bar="'+barType+'" data-id="'+currentTab+'">更多</button></div></div>';
+
+                var customs = theme.customConfigs || [];
+                if (customs.length > 0) {
+                    html += '<div class="custom-section-title">📁 自定义配置 <span class="badge-count">'+customs.length+'</span></div>';
+                    customs.forEach(function(cfg) {
+                        var isActive = (activeId === cfg.id);
+                        var cfgSettings = cfg.settings || {};
+                        var cfgLayoutName = cfgSettings._layoutName || (barType === 'bottom' ? '悬浮胶囊' : '默认');
+                        html += '<div class="config-card '+(isActive?'active-card':'')+'">';
+                        html += '<div class="config-card-header"><span class="config-card-title">'+escapeHtml(cfg.name)+'</span>';
+                        html += '<span class="status-badge '+(isActive?'':'inactive')+'">'+(isActive?'已应用':'未应用')+'</span></div>';
+                        html += '<div class="config-summary">'+(cfgSettings._textureName||'磨砂')+' / '+cfgLayoutName+'</div>';
+                        html += '<div class="card-actions"><button class="apply-btn primary '+(isActive?'applied':'')+'" data-bar="'+barType+'" data-id="'+cfg.id+'">'+(isActive?'已应用':'应用')+'</button>';
+                        html += '<button class="edit-btn" data-bar="'+barType+'" data-id="'+cfg.id+'">编辑</button>';
+                        html += '<button class="more-btn" data-bar="'+barType+'" data-id="'+cfg.id+'">更多</button></div></div>';
+                    });
+                } else {
+                    html += '<div style="text-align:center;padding:20px 0;color:var(--text-secondary);font-size:0.9rem;">暂无自定义配置，点击下方「添加配置」创建</div>';
+                }
+                container.innerHTML = html;
+
+                container.querySelectorAll('.apply-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var bar = this.dataset.bar, id = this.dataset.id;
+                        var theme = getCurrentThemeData(bar);
+                        theme.activeConfigId = id;
+                        var settings = getConfigById(bar, id);
+                        if (settings) {
+                            if (bar === 'top') applyTopSettings(settings);
+                            else applyBottomSettings(settings);
+                            saveData();
+                            renderActiveModeCard(bar);
+                            showToast('已应用「'+getConfigName(bar, id)+'」');
+                        }
+                    });
+                });
+                container.querySelectorAll('.edit-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        openEditModal(this.dataset.bar, this.dataset.id);
+                    });
+                });
+                container.querySelectorAll('.more-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        openMoreModal(this.dataset.bar, this.dataset.id);
+                    });
+                });
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            // ---------- Tab 切换 ----------
+            document.getElementById('topTabSwitch').addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON') return;
+                document.querySelectorAll('#topTabSwitch button').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                data.top.currentTab = e.target.dataset.mode;
+                saveData();
+                var theme = getCurrentThemeData('top');
+                var settings = getConfigById('top', theme.activeConfigId || data.top.currentTab);
+                if (settings) applyTopSettings(settings);
+                renderActiveModeCard('top');
+            });
+            document.getElementById('bottomTabSwitch').addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON') return;
+                document.querySelectorAll('#bottomTabSwitch button').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                data.bottom.currentTab = e.target.dataset.mode;
+                saveData();
+                var theme = getCurrentThemeData('bottom');
+                var settings = getConfigById('bottom', theme.activeConfigId || data.bottom.currentTab);
+                if (settings) applyBottomSettings(settings);
+                renderActiveModeCard('bottom');
+            });
+
+            // ---------- 添加配置 ----------
+            var pendingBarType = null;
+            window.manualAddConfig = function() {
+                if (!pendingBarType) { showToast('请先选择操作栏'); return; }
+                var theme = getCurrentThemeData(pendingBarType);
+                var counter = theme.customCounter || 0, name;
+                do { counter++; name = '自定义'+counter; }
+                while (theme.customConfigs.some(c => c.name === name) || name === '日间主题' || name === '夜间模式');
+                theme.customCounter = counter;
+                var newSettings = defaultSettings(pendingBarType);
+                var newId = 'custom_'+Date.now();
+                theme.customConfigs.push({ id: newId, name: name, settings: newSettings });
+                theme.activeConfigId = newId;
+                saveData();
+                renderActiveModeCard(pendingBarType);
+                document.getElementById('addConfigModal').classList.remove('active');
+                pendingBarType = null;
+                showToast('已添加「'+name+'」');
+            };
+            window.importConfig = function() { document.getElementById('importFileInput').click(); };
+
+            var addConfigModal = document.getElementById('addConfigModal');
+            document.getElementById('topAddConfigBtn').addEventListener('click', function() { pendingBarType = 'top'; addConfigModal.classList.add('active'); });
+            document.getElementById('bottomAddConfigBtn').addEventListener('click', function() { pendingBarType = 'bottom'; addConfigModal.classList.add('active'); });
+            document.getElementById('closeAddModalBtn').addEventListener('click', function() { addConfigModal.classList.remove('active'); pendingBarType = null; });
+            addConfigModal.addEventListener('click', function(e) { if (e.target === addConfigModal) { addConfigModal.classList.remove('active'); pendingBarType = null; } });
+            document.getElementById('manualConfigBtn').addEventListener('click', window.manualAddConfig);
+            // 绑定导入按钮
+            document.getElementById('importConfigBtn').addEventListener('click', window.importConfig);
+
+            document.getElementById('importFileInput').addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        var imported = JSON.parse(event.target.result);
+                        if (!imported.settings || !imported.name) throw new Error('无效格式');
+                        if (!pendingBarType) { showToast('请先选择操作栏'); return; }
+                        var theme = getCurrentThemeData(pendingBarType);
+                        var importedName = imported.name, suffix = 1;
+                        while (theme.customConfigs.some(c => c.name === importedName) || importedName === '日间主题' || importedName === '夜间模式') {
+                            importedName = imported.name + ' ('+suffix+')'; suffix++;
+                        }
+                        var newId = 'custom_'+Date.now();
+                        theme.customConfigs.push({ id: newId, name: importedName, settings: imported.settings });
+                        theme.activeConfigId = newId;
+                        saveData();
+                        renderActiveModeCard(pendingBarType);
+                        addConfigModal.classList.remove('active');
+                        pendingBarType = null;
+                        showToast('已导入「'+importedName+'」');
+                    } catch (err) { alert('导入失败：文件格式不正确'); }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            });
+
+            // ---------- 更多弹窗 ----------
+            var moreModal = document.getElementById('moreModal');
+            function openMoreModal(barType, configId) {
+                var name = getConfigName(barType, configId);
+                document.getElementById('moreModalTitle').textContent = name + ' · 更多操作';
+                var list = document.getElementById('moreModalList');
+                list.innerHTML = '';
+                var exportBtn = document.createElement('button');
+                exportBtn.textContent = '📤 导出配置';
+                exportBtn.addEventListener('click', function() {
+                    var settings = getConfigById(barType, configId);
+                    if (!settings) { showToast('配置不存在'); return; }
+                    var exportData = { name: getConfigName(barType, configId), settings: settings, barType: barType, exportedAt: new Date().toISOString() };
+                    var blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a'); a.href = url; a.download = 'config-'+barType+'-'+configId+'.json'; a.click();
+                    URL.revokeObjectURL(url);
+                    moreModal.classList.remove('active');
+                    showToast('已导出');
+                });
+                list.appendChild(exportBtn);
+                if (configId !== 'day' && configId !== 'night') {
+                    var copyBtn = document.createElement('button');
+                    copyBtn.textContent = '📋 复制为预设';
+                    copyBtn.addEventListener('click', function() {
+                        var settings = getConfigById(barType, configId);
+                        if (!settings) return;
+                        var theme = getCurrentThemeData(barType);
+                        var newId = 'custom_'+Date.now();
+                        var newName = getConfigName(barType, configId) + ' (副本)', suffix = 1;
+                        while (theme.customConfigs.some(c => c.name === newName)) { newName = getConfigName(barType, configId) + ' (副本'+suffix+')'; suffix++; }
+                        theme.customConfigs.push({ id: newId, name: newName, settings: JSON.parse(JSON.stringify(settings)) });
+                        theme.activeConfigId = newId;
+                        saveData();
+                        renderActiveModeCard(barType);
+                        moreModal.classList.remove('active');
+                        showToast('已复制为「'+newName+'」');
+                    });
+                    list.appendChild(copyBtn);
+                    var deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '🗑️ 删除配置';
+                    deleteBtn.style.color = '#dc2626';
+                    deleteBtn.addEventListener('click', function() {
+                        if (confirm('确定要删除配置「'+getConfigName(barType, configId)+'」吗？')) {
+                            var theme = getCurrentThemeData(barType);
+                            theme.customConfigs = theme.customConfigs.filter(c => c.id !== configId);
+                            if (theme.activeConfigId === configId) {
+                                theme.activeConfigId = barType === 'top' ? data.top.currentTab : data.bottom.currentTab;
+                            }
+                            saveData();
+                            renderActiveModeCard(barType);
+                            moreModal.classList.remove('active');
+                            showToast('已删除');
+                        }
+                    });
+                    list.appendChild(deleteBtn);
+                }
+                moreModal.classList.add('active');
+            }
+            document.getElementById('closeMoreModalBtn').addEventListener('click', function() { moreModal.classList.remove('active'); });
+            moreModal.addEventListener('click', function(e) { if (e.target === moreModal) moreModal.classList.remove('active'); });
+
+            // ---------- 编辑弹窗 ----------
+            var currentEditBarType, editTempSettings, editCurrentId;
+            var editModal = document.getElementById('editModal');
+
+            function openEditModal(barType, configId) {
+                var full = getConfigFull(barType, configId);
+                if (!full) { showToast('配置不存在'); return; }
+                currentEditBarType = barType;
+                editCurrentId = configId;
+                editTempSettings = JSON.parse(JSON.stringify(full.settings));
+                document.getElementById('editModalSubtitle').textContent = full.name + (full.isDefault ? ' (预设)' : '');
+                renderEditModalContent(barType);
+                editModal.classList.add('active');
+            }
+
+            function renderEditModalContent(barType) {
+                var s = editTempSettings;
+                var layoutPresets = barType === 'top' ? topLayoutPresets : bottomLayoutPresets;
+                var content = document.getElementById('editModalContent');
+                var isCustom = (editCurrentId !== 'day' && editCurrentId !== 'night');
+                var nameHtml = '';
+                if (isCustom) {
+                    var theme = getCurrentThemeData(currentEditBarType);
+                    var found = theme.customConfigs.find(c => c.id === editCurrentId);
+                    var currentName = found ? found.name : '自定义';
+                    nameHtml = '<div class="setting-item" id="editNameItem"><span class="label">✏️ 名称</span><span class="value">'+escapeHtml(currentName)+' ›</span></div>';
+                }
+                content.innerHTML = nameHtml +
+                    '<div class="setting-item" id="editTextureItem"><span class="label">背景质感</span><span class="value">'+s._textureName+' ›</span></div>' +
+                    '<div class="setting-item" id="editLayoutItem"><span class="label">布局样式</span><span class="value">'+(s._layoutName || (barType==='bottom'?'悬浮胶囊':'默认'))+' ›</span></div>' +
+                    (barType === 'bottom' ? '<div class="setting-item" id="editSlideAnimItem"><span class="label">滑块动画</span><span class="value">'+(s._slideAnimation||'平滑')+' ›</span></div>' : '') +
+                    '<div class="setting-item" id="editBlurItem"><span class="label">启用磨砂</span><span class="value"><div class="toggle-sm '+(s.blurEnabled?'active':'')+'" id="editBlurToggle"></div></span></div>' +
+                    '<div class="setting-item" id="editBlurAmountItem"><span class="label">模糊强度</span><span class="value">'+s.blurAmount+'px</span></div>' +
+                    '<div class="setting-item" id="editOpacityItem"><span class="label">不透明度</span><span class="value">'+Math.round(s.opacity*100)+'%</span></div>' +
+                    '<div class="setting-item" id="editRadiusItem"><span class="label">圆角大小</span><span class="value">'+s.borderRadius+'px</span></div>' +
+                    '<div class="setting-item" id="editShadowItem"><span class="label">阴影透明度</span><span class="value">'+s.shadowOpacity+'</span></div>' +
+                    '<div class="setting-item" id="editBgColorItem"><span class="label">背景颜色</span><span class="value"><span class="color-swatch-sm" style="background:'+(s.bgColor==='transparent'?'transparent':s.bgColor)+'; border:'+(s.bgColor==='transparent'?'2px dashed #cbd5e1':'1px solid var(--border)')+';"></span> '+(s.bgColor==='transparent'?'透明':s.bgColor)+'</span></div>' +
+                    '<div class="setting-item" id="editTextColorItem"><span class="label">文字颜色</span><span class="value"><span class="color-swatch-sm" style="background:'+s.textColor+';"></span> '+s.textColor+'</span></div>' +
+                    '<div class="setting-item" id="editBorderColorItem"><span class="label">边框颜色</span><span class="value"><span class="color-swatch-sm" style="background:'+s.borderColor+';"></span> '+s.borderColor+'</span></div>';
+
+                function bind(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
+
+                if (isCustom) bind('editNameItem', function() {
+                    var theme = getCurrentThemeData(currentEditBarType);
+                    var found = theme.customConfigs.find(c => c.id === editCurrentId);
+                    if (!found) return;
+                    var newName = prompt('输入新名称：', found.name);
+                    if (newName !== null && newName.trim() !== '') {
+                        newName = newName.trim();
+                        if (theme.customConfigs.some(c => c.id !== editCurrentId && c.name === newName) || newName === '日间主题' || newName === '夜间模式') {
+                            alert('名称已被使用'); return;
+                        }
+                        found.name = newName;
+                        saveData();
+                        renderActiveModeCard(currentEditBarType);
+                        openEditModal(currentEditBarType, editCurrentId);
+                        showToast('已重命名');
+                    }
+                });
+
+                bind('editTextureItem', function() {
+                    openSubPicker('背景质感', texturePresets, s._textureName, function(p) {
+                        s._textureName = p.name; s.blurEnabled = p.blur; s.blurAmount = p.blurAmt;
+                        s.opacity = p.opac; s.bgColor = p.bg; s.textColor = p.txt; s.borderColor = p.bdr;
+                        if (p.shadow !== undefined) s.shadowOpacity = p.shadow;
+                        renderEditModalContent(barType);
+                        if (barType === 'top') applyTopSettings(s); else applyBottomSettings(s);
+                    });
+                });
+                bind('editLayoutItem', function() {
+                    openSubPicker('布局样式', layoutPresets, s._layoutName || (barType==='bottom'?'悬浮胶囊':'默认'), function(p) {
+                        s._layoutName = p.name;
+                        if (p.borderRadius !== undefined) s.borderRadius = p.borderRadius;
+                        if (p.shadow !== undefined) s.shadowOpacity = p.shadow;
+                        renderEditModalContent(barType);
+                        if (barType === 'top') applyTopSettings(s); else applyBottomSettings(s);
+                    });
+                });
+                if (barType === 'bottom') {
+                    bind('editSlideAnimItem', function() {
+                        openSubPicker('滑块动画', slideAnimPresets, s._slideAnimation || '平滑', function(p) {
+                            s._slideAnimation = p.name;
+                            renderEditModalContent(barType);
+                            applyBottomSettings(s);
+                        });
+                    });
+                }
+                document.getElementById('editBlurToggle').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    s.blurEnabled = !s.blurEnabled;
+                    renderEditModalContent(barType);
+                    if (barType === 'top') applyTopSettings(s); else applyBottomSettings(s);
+                });
+
+                function promptNum(title, cur, min, max, cb) {
+                    var val = prompt(title, String(cur));
+                    if (val === null) return;
+                    var num = parseFloat(val);
+                    if (!isNaN(num) && num >= min && num <= max) { cb(num); renderEditModalContent(barType); if (barType==='top') applyTopSettings(s); else applyBottomSettings(s); }
+                    else alert('请输入 '+min+' ~ '+max+' 之间的数值');
+                }
+                bind('editBlurAmountItem', function() { promptNum('模糊强度 (0-20)', s.blurAmount, 0, 20, v => s.blurAmount = v); });
+                bind('editOpacityItem', function() { promptNum('不透明度 (0-1)', s.opacity, 0, 1, v => s.opacity = v); });
+                bind('editRadiusItem', function() { promptNum('圆角 (0-30)', s.borderRadius, 0, 30, v => s.borderRadius = v); });
+                bind('editShadowItem', function() { promptNum('阴影透明度 (0-1)', s.shadowOpacity, 0, 1, v => s.shadowOpacity = v); });
+
+                function pickColor(cur, cb) {
+                    var inp = document.createElement('input');
+                    inp.type = 'color'; inp.value = cur === 'transparent' ? '#ffffff' : cur;
+                    inp.style.position = 'fixed'; inp.style.opacity = '0'; inp.style.pointerEvents = 'none';
+                    document.body.appendChild(inp);
+                    inp.addEventListener('input', function(e) { cb(e.target.value); renderEditModalContent(barType); if (barType==='top') applyTopSettings(s); else applyBottomSettings(s); });
+                    inp.click(); setTimeout(() => inp.remove(), 100);
+                }
+                bind('editBgColorItem', function() { pickColor(s.bgColor === 'transparent' ? '#ffffff' : s.bgColor, v => s.bgColor = v); });
+                bind('editTextColorItem', function() { pickColor(s.textColor, v => s.textColor = v); });
+                bind('editBorderColorItem', function() { pickColor(s.borderColor, v => s.borderColor = v); });
+            }
+
+            document.getElementById('editModalCancel').addEventListener('click', function() {
+                editModal.classList.remove('active');
+                var theme = getCurrentThemeData(currentEditBarType);
+                var settings = getConfigById(currentEditBarType, theme.activeConfigId || currentEditBarType);
+                if (settings) { if (currentEditBarType === 'top') applyTopSettings(settings); else applyBottomSettings(settings); }
+            });
+            document.getElementById('editModalApply').addEventListener('click', function() {
+                if (!editCurrentId || !currentEditBarType) return;
+                var theme = getCurrentThemeData(currentEditBarType);
+                var settings = JSON.parse(JSON.stringify(editTempSettings));
+                if (editCurrentId === 'day' || editCurrentId === 'night') {
+                    theme.settings = settings;
+                } else {
+                    var cfg = theme.customConfigs.find(c => c.id === editCurrentId);
+                    if (cfg) cfg.settings = settings;
+                }
+                if (theme.activeConfigId === editCurrentId) {
+                    if (currentEditBarType === 'top') applyTopSettings(settings); else applyBottomSettings(settings);
+                }
+                saveData();
+                renderActiveModeCard(currentEditBarType);
+                editModal.classList.remove('active');
+                showToast('已保存配置');
+            });
+
+            // ---------- 子选择器 ----------
+            var subPickerModal = document.getElementById('subPickerModal');
+            var subPickerCallback = null;
+            function openSubPicker(title, options, currentName, callback) {
+                document.getElementById('subPickerTitle').textContent = title;
+                subPickerCallback = callback;
+                var content = document.getElementById('subPickerContent');
+                content.innerHTML = '';
+                var grid = document.createElement('div');
+                grid.className = 'option-grid';
+                options.forEach(function(opt) {
+                    var card = document.createElement('div');
+                    card.className = 'option-card'+(opt.name === currentName ? ' active' : '');
+                    card.innerHTML = '<span class="option-icon">'+(opt.icon||'')+'</span><span>'+opt.name+'</span>';
+                    card.addEventListener('click', function() {
+                        subPickerModal.classList.remove('active');
+                        if (subPickerCallback) subPickerCallback(opt);
+                        subPickerCallback = null;
+                    });
+                    grid.appendChild(card);
+                });
+                content.appendChild(grid);
+                subPickerModal.classList.add('active');
+            }
+            document.getElementById('subPickerCancel').addEventListener('click', function() { subPickerModal.classList.remove('active'); subPickerCallback = null; });
+            document.getElementById('subPickerApply').addEventListener('click', function() { subPickerModal.classList.remove('active'); subPickerCallback = null; });
+
+            // ---------- 使用说明 / 更新日志弹窗 ----------
+            var helpModalOverlay = document.getElementById('helpModalOverlay');
+            var helpModalClose = document.getElementById('helpModalClose');
+            var changelogModalOverlay = document.getElementById('changelogModalOverlay');
+            var changelogModalClose = document.getElementById('changelogModalClose');
+
+            document.getElementById('helpBtn').addEventListener('click', function() {
+                helpModalOverlay.classList.add('active');
+            });
+            document.getElementById('changelogBtn').addEventListener('click', function() {
+                changelogModalOverlay.classList.add('active');
+            });
+
+            helpModalClose.addEventListener('click', function() {
+                helpModalOverlay.classList.remove('active');
+            });
+            changelogModalClose.addEventListener('click', function() {
+                changelogModalOverlay.classList.remove('active');
+            });
+
+            helpModalOverlay.addEventListener('click', function(e) {
+                if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active');
+            });
+            changelogModalOverlay.addEventListener('click', function(e) {
+                if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active');
+            });
+
+            // ---------- 初始化 ----------
+            var topTab = document.querySelector('#topTabSwitch button[data-mode="'+(data.top.currentTab||'day')+'"]');
+            if (topTab) { document.querySelectorAll('#topTabSwitch button').forEach(b => b.classList.remove('active')); topTab.classList.add('active'); }
+            var bottomTab = document.querySelector('#bottomTabSwitch button[data-mode="'+(data.bottom.currentTab||'day')+'"]');
+            if (bottomTab) { document.querySelectorAll('#bottomTabSwitch button').forEach(b => b.classList.remove('active')); bottomTab.classList.add('active'); }
+
+            var topTheme = getCurrentThemeData('top');
+            applyTopSettings(getConfigById('top', topTheme.activeConfigId || data.top.currentTab));
+            var bottomTheme = getCurrentThemeData('bottom');
+            applyBottomSettings(getConfigById('bottom', bottomTheme.activeConfigId || data.bottom.currentTab));
+
+            renderActiveModeCard('top');
+            renderActiveModeCard('bottom');
+            window.addEventListener('resize', handleResize);
+            switchView('home');
+
+            // 初始化时同步深色模式给 iframe
+            var iframe = document.getElementById('homeIframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'darkMode', isDark: document.body.classList.contains('dark-mode') }, '*');
+            }
+
+            console.log('✅ 完整版 index.html 已加载，日夜间同步 & 导入按钮正常');
+        })();
+    </script>
 </body>
 </html>
