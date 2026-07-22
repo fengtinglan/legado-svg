@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>legado-svg</title>
-    <!-- 修正后的图标路径 -->
     <link rel="icon" type="image/svg+xml" href="https://legado-svg.heartthrob.cn/images/legado-svg.svg">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -107,14 +106,20 @@
             </div>
             <div class="help-modal-body">
                 <div class="help-section">
+                    <h3>2026-07-22 (v2.1)</h3>
+                    <p>• 修复气泡预览图自适应问题：无论原始气泡尺寸多大，都会完整缩放显示在预览框内，不再出现只显示1/4的情况</p>
+                    <p>• 优化预览框 CSS（overflow 改为 hidden），配合 JS 强制设置 SVG 宽高100%及 preserveAspectRatio 属性</p>
+                </div>
+                <hr class="help-divider">
+                <div class="help-section">
                     <h3>2026-07-14 (v2.0)</h3>
                     <p>• 晴天模式重构：每个形状区域拥有独立的填充颜色和透明度控件（分两行排列，支持滚动）</p>
                     <p>• 新增 <strong>$tccolor 选择弹窗</strong>：导出时需至少选择一个形状作为 $tccolor 变量，勾选后预览图会显示智能斜线标记（深色填充用白线，浅色填充用黑线）</p>
                     <p>• 导出流程优化：先选择 $tccolor，再确认是否保留变量，最后进入导出选项</p>
                     <p>• 填充颜色区域增加滚动限制（超过300px可滚动），$tccolor选择弹窗同理</p>
-                    <p>• 晋江格式文字固定为“数量”，导出不再询问</p>
+                    <p>• 晋江格式文字固定为"数量"，导出不再询问</p>
                     <p>• 变量标注灰色小字固定显示变量名，不随颜色变化</p>
-                    <p>• 移除独立的“保留修改”按钮，功能完全整合进导出按钮</p>
+                    <p>• 移除独立的"保留修改"按钮，功能完全整合进导出按钮</p>
                 </div>
                 <hr class="help-divider">
                 <div class="help-section">
@@ -131,8 +136,8 @@
                     <h3>2026-07-12</h3>
                     <p>• 新增颜色预览和取色器，支持快速选色</p>
                     <p>• 气泡预览输入栏统一宽度，预览图 sticky 定位</p>
-                    <p>• 新增“转为晴天格式”，自动替换颜色变量并居中文字</p>
-                    <p>• “转为阅读格式”更名为“转为晋江格式”</p>
+                    <p>• 新增"转为晴天格式"，自动替换颜色变量并居中文字</p>
+                    <p>• "转为阅读格式"更名为"转为晋江格式"</p>
                     <p>• 格式转换不再覆盖输入框，避免误操作</p>
                     <p>• 字体粗细控件在晴天模式下可见，透明度输入栏添加提示</p>
                     <p>• 使用说明更新，补充字体粗细等参数要求</p>
@@ -140,7 +145,7 @@
                     <p>• 界面新增更新日志按钮及更新时间显示</p>
                     <p>• 修复使用说明按钮点击后蓝色方块残留</p>
                     <p>• 新增描边旋转和文字旋转控件，支持动态预览</p>
-                    <p>• 新增“📌 固定”按钮，解决键盘弹出时预览图跟随滚动问题</p>
+                    <p>• 新增"📌 固定"按钮，解决键盘弹出时预览图跟随滚动问题</p>
                     <p>• 预览图固定后右上角显示关闭按钮，点击即可解除固定</p>
                 </div>
                 <hr class="help-divider">
@@ -226,9 +231,8 @@
     <!-- 主容器 -->
     <div class="container">
         <h1>
-            <!-- 修正后的图标 -->
             <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" style="width:1.2em; height:1.2em; vertical-align:middle; margin-right:4px;" alt="">legado-svg
-            <span class="update-time">更新于 2026-07-14</span>
+            <span class="update-time">更新于 2026-07-22</span>
             <button class="help-btn" id="helpBtn">📖 使用说明</button>
             <button class="help-btn" id="changelogBtn">📋 更新日志</button>
         </h1>
@@ -276,17 +280,14 @@
                         <button id="toSvgBtn" class="secondary">🔄 图片转 SVG</button>
                         <button id="customLinkBtn" class="secondary">🔗 自定义链接</button>
                     </div>
-                    <!-- 链接标识已移除 -->
                     <div class="sub-row bubble-sub-row" id="bubbleSubRow">
                         <button id="bubbleIconBtn" class="secondary">🎈 气泡图标</button>
                         <button id="bubbleIconCustomLinkBtn" class="secondary">🔗 自定义链接</button>
                     </div>
-                    <!-- 气泡图标链接标识已移除 -->
                     <div class="sub-row compress-sub-row" id="compressSubRow">
                         <button id="compressBtn" class="secondary">🗜️ SVG 压缩</button>
                         <button id="compressCustomLinkBtn" class="secondary">🔗 自定义链接</button>
                     </div>
-                    <!-- 压缩链接标识已移除 -->
                 </div>
             </div>
         </div>
@@ -317,9 +318,11 @@
                 <button id="closeBubbleBtn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <div class="bubble-preview-container">
-                <div class="preview-box" id="bubblePreviewBox" style="overflow: visible;">
-                    <button id="closePinBtn" class="close-pin-btn" title="解除固定">✕</button>
-                </div>
+                <!-- 移除了内联的 overflow: visible，改用 CSS 控制 -->
+                <!-- 确认此处无 style="overflow:visible" -->
+<div class="preview-box" id="bubblePreviewBox">
+    <button id="closePinBtn" class="close-pin-btn" title="解除固定">✕</button>
+</div>
                 <div class="bubble-controls" id="bubbleControls">
                     <div class="control-section-title">📍 文字位置</div>
                     <div class="control-row"><label>X 坐标</label><input type="number" id="textX" value="550" step="1" style="width:160px;"></div>
@@ -328,11 +331,11 @@
                     <div class="control-section-title">🔤 文字样式</div>
                     <div class="control-row"><label>字体大小</label><input type="number" id="textSize" value="400" step="1" min="1" style="width:160px;"></div>
                     <div class="control-row">
-    <label>字体颜色</label>
-    <span class="color-preview" id="textFillPreview"></span>
-    <input type="color" id="textFillPicker" class="color-picker" style="display:none;">
-    <input type="text" id="textFill" value="字" placeholder="字" style="width:130px;">
-</div>
+                        <label>字体颜色</label>
+                        <span class="color-preview" id="textFillPreview"></span>
+                        <input type="color" id="textFillPicker" class="color-picker" style="display:none;">
+                        <input type="text" id="textFill" value="字" placeholder="字" style="width:130px;">
+                    </div>
                     <div class="control-row"><label>字体族</label><input type="text" id="textFont" value="Roboto Condensed" placeholder="字体名称" style="width:160px;"></div>
                     <div class="control-row"><label>字体粗细</label><input type="text" id="textWeight" value="bold" placeholder="bold / 700 / normal" style="width:160px;"></div>
 
@@ -388,11 +391,11 @@
         </div>
     </div>
 
-<!-- 回到顶端 / 到底端 悬浮按钮 -->
-<div id="float-buttons">
-    <button id="btn-to-top" title="回到顶端">⬆</button>
-    <button id="btn-to-bottom" title="到底端">⬇</button>
-</div>
+    <!-- 回到顶端 / 到底端 悬浮按钮 -->
+    <div id="float-buttons">
+        <button id="btn-to-top" title="回到顶端">⬆</button>
+        <button id="btn-to-bottom" title="到底端">⬇</button>
+    </div>
 
     <script src="script.js"></script>
 </body>

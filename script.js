@@ -378,7 +378,7 @@
 
     function bindColorPreview(preview, input) { if (!preview || !input) return; preview.addEventListener('click', e => { e.stopPropagation(); colorPicker.open(preview, input); }); }
     bindColorPreview($('replaceColorPreview'), replaceInput); bindColorPreview($('bgColorPreview'), bgColor);
-    bindColorPreview(fillColorPreview, fillColorInput); 
+    bindColorPreview(fillColorPreview, fillColorInput);
     bindColorPreview(textFillPreview, textFill);
 
     bindColorPreview(strokeColorPreview, strokeColorInput);
@@ -610,13 +610,30 @@
         }
     }
 
+    // ★★★ 修复后的 updateBubblePreview：不修改 width/height，只补 viewBox ★★★
     function updateBubblePreview() {
         const code = currentPreviewCode;
-        if (!code || !/<svg\b/i.test(code)) { bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>'; return; }
-        const parser = new DOMParser(); const doc = parser.parseFromString(code, 'image/svg+xml');
-        if (doc.querySelector('parsererror')) { bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>'; return; }
+        if (!code || !/<svg\b/i.test(code)) {
+            bubblePreviewBox.innerHTML = '<span style="color:#94a3b8;">请先转换格式</span>';
+            return;
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(code, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) {
+            bubblePreviewBox.innerHTML = '<span style="color:#dc2626;">SVG解析错误</span>';
+            return;
+        }
         const previewDoc = parser.parseFromString(code, 'image/svg+xml');
         const svgEl = previewDoc.documentElement;
+
+        // 只确保有 viewBox，不覆盖 width/height（交给 CSS 的 max-width/max-height）
+        if (!svgEl.getAttribute('viewBox')) {
+            const w = parseFloat(svgEl.getAttribute('width')) || 1153;
+            const h = parseFloat(svgEl.getAttribute('height')) || 1024;
+            svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        }
+        svgEl.removeAttribute('preserveAspectRatio'); // 清理可能遗留的属性，让浏览器自行处理
+
         const shapes = previewDoc.querySelectorAll('path, circle, ellipse, rect, line, polyline, polygon');
         const rotateAngle = parseFloat(rotateAngleInput.value) || 0;
         const strokeColorVal = strokeColorInput.value.trim();
@@ -719,11 +736,19 @@
             }
         }
         const serializer = new XMLSerializer();
-        const existingCloseBtn = bubblePreviewBox.querySelector('#closePinBtn');
         bubblePreviewBox.innerHTML = serializer.serializeToString(previewDoc.documentElement);
-        if (existingCloseBtn) { bubblePreviewBox.appendChild(existingCloseBtn); } else { const btn = document.createElement('button'); btn.id = 'closePinBtn'; btn.className = 'close-pin-btn'; btn.title = '解除固定'; btn.textContent = '✕'; bubblePreviewBox.appendChild(btn); }
-        const btn = bubblePreviewBox.querySelector('#closePinBtn');
-        if (btn) { btn.style.display = isPreviewPinned ? 'flex' : 'none'; }
+
+        // 确保关闭按钮存在
+        let closeBtn = bubblePreviewBox.querySelector('#closePinBtn');
+        if (!closeBtn) {
+            closeBtn = document.createElement('button');
+            closeBtn.id = 'closePinBtn';
+            closeBtn.className = 'close-pin-btn';
+            closeBtn.title = '解除固定';
+            closeBtn.textContent = '✕';
+            bubblePreviewBox.appendChild(closeBtn);
+        }
+        closeBtn.style.display = isPreviewPinned ? 'flex' : 'none';
     }
 
     function openBubbleSection() {
@@ -1072,23 +1097,10 @@
     input.value = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.4 19a4.2 4.2 0 0 1-1.57-.298L7 21v-3.134a2.668 2.668 0 0 1-1.795-3.773A4.8 4.8 0 0 1 8.113 5.16a5.335 5.335 0 0 1 9.194 1.078a5.333 5.333 0 0 1 3.404 8.771M16 19h6"/></svg>`;
     setInputMode('code');
     setTimeout(handleExtract, 50);
-    
-    // 悬浮按钮：回到顶端 / 到底端（带点击高亮反馈）
+
     const btnTop = document.getElementById('btn-to-top');
     const btnBottom = document.getElementById('btn-to-bottom');
-
-    function highlightButton(btn) {
-        btn.classList.add('highlight');
-        setTimeout(() => btn.classList.remove('highlight'), 400);
-    }
-
-    btnTop.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        highlightButton(btnTop);
-    });
-
-    btnBottom.addEventListener('click', () => {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-        highlightButton(btnBottom);
-    });
+    function highlightButton(btn) { btn.classList.add('highlight'); setTimeout(() => btn.classList.remove('highlight'), 400); }
+    btnTop.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); highlightButton(btnTop); });
+    btnBottom.addEventListener('click', () => { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); highlightButton(btnBottom); });
 })();
