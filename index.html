@@ -710,13 +710,16 @@
     <!-- 设置页视图 -->
     <div id="viewContainer" class="view">
         <div class="view active" id="viewProfile">
-            <div class="profile-card">
-                <div class="profile-avatar">😊</div>
-                <div class="profile-info">
-                    <div class="profile-name">legado 用户</div>
-                    <div class="profile-bio">自定义你的阅读气泡与导航栏</div>
-                </div>
-            </div>
+            <div class="profile-card" id="profileInfoCard" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:16px;">
+        <div class="profile-avatar" id="profileAvatarDisplay">😊</div>
+        <div class="profile-info">
+            <div class="profile-name" id="profileNameDisplay">legado 用户</div>
+            <div class="profile-bio" id="profileBioDisplay">自定义你的阅读气泡与导航栏</div>
+        </div>
+    </div>
+    <span style="color:var(--text-secondary); font-size:1.5rem;">›</span>
+</div>
             <div class="settings-list">
                 <div class="settings-item" id="openAppearanceBtn">
                     <div class="item-left"><span class="item-icon">🎨</span><span>外观设置</span></div>
@@ -762,6 +765,35 @@
             <div id="bottomActiveModeCard"></div>
             <button class="add-config-btn" id="bottomAddConfigBtn">＋ 添加配置</button>
         </div>
+        <!-- 编辑个人资料 -->
+<div class="view" id="viewEditProfile">
+    <div class="appearance-header">
+        <button class="back-btn" id="backFromEditProfile">←</button>
+        <h2>编辑个人资料</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;max-width:500px;margin:0 auto;">
+        <!-- 大头像预览 -->
+        <div id="editAvatarPreview" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:3rem;color:white;overflow:hidden;flex-shrink:0;">
+            😊
+        </div>
+        <div style="width:100%;">
+            <label style="display:block;margin-bottom:6px;font-weight:600;">头像</label>
+            <input type="text" id="editAvatar" placeholder="输入 Emoji 或图片链接" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+        </div>
+        <div style="width:100%;">
+            <label style="display:block;margin-bottom:6px;font-weight:600;">用户名</label>
+            <input type="text" id="editUsername" placeholder="你的名字" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+        </div>
+        <div style="width:100%;">
+            <label style="display:block;margin-bottom:6px;font-weight:600;">简介</label>
+            <textarea id="editBio" rows="3" placeholder="写一句简单的介绍..." style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px;width:100%;">
+            <button id="saveProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--primary);color:white;border:none;">保存</button>
+            <button id="cancelEditProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--bg);color:var(--text);border:1px solid var(--border);">取消</button>
+        </div>
+    </div>
+</div>
     </div>
 
     <!-- 底部导航栏 -->
@@ -1052,6 +1084,8 @@
             targetSub = containerEl.querySelector('#viewTopBarSettings');
         } else if (name === 'bottomBar') {
             targetSub = containerEl.querySelector('#viewBottomBarSettings');
+            } else if (name === 'editProfile') {
+    targetSub = containerEl.querySelector('#viewEditProfile');
         } else {
             // 后备
             targetSub = containerEl.querySelector('#viewProfile');
@@ -1480,6 +1514,88 @@ function showSettingsToast(msg) {
             renderActiveModeCard('top');
             renderActiveModeCard('bottom');
             window.addEventListener('resize', handleResize);
+            // ==================== 个人资料编辑功能 ====================
+// ==================== 个人资料编辑功能（增强版） ====================
+const PROFILE_STORAGE_KEY = 'legado-user-profile';
+function updateProfileUI(saved) {
+    // 更新我的页面卡片
+    const avatarEl = document.getElementById('profileAvatarDisplay');
+    const nameEl = document.getElementById('profileNameDisplay');
+    const bioEl = document.getElementById('profileBioDisplay');
+    if (!avatarEl || !nameEl || !bioEl) return;
+    if (saved.avatar) {
+        if (saved.avatar.startsWith('http')) {
+            avatarEl.innerHTML = `<img src="${saved.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+            avatarEl.textContent = saved.avatar;
+        }
+    } else {
+        avatarEl.textContent = '😊';
+    }
+    nameEl.textContent = saved.name || 'legado 用户';
+    bioEl.textContent = saved.bio || '自定义你的阅读气泡与导航栏';
+}
+function loadProfile() {
+    const saved = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY)) || {};
+    updateProfileUI(saved);
+}
+function saveProfile(name, avatar, bio) {
+    const data = { name, avatar, bio };
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data));
+    updateProfileUI(data);
+}
+
+// 实时预览头像
+const editAvatarInput = document.getElementById('editAvatar');
+const editAvatarPreview = document.getElementById('editAvatarPreview');
+if (editAvatarInput && editAvatarPreview) {
+    editAvatarInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (val === '') {
+            editAvatarPreview.textContent = '😊';
+            editAvatarPreview.innerHTML = '😊';
+        } else if (val.startsWith('http')) {
+            editAvatarPreview.innerHTML = `<img src="${val}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+            editAvatarPreview.textContent = val;
+            editAvatarPreview.innerHTML = val; // 确保 Emoji 正常渲染
+        }
+    });
+}
+
+// 打开编辑页面
+document.getElementById('profileInfoCard').addEventListener('click', function() {
+    const saved = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY)) || {};
+    document.getElementById('editAvatar').value = saved.avatar || '';
+    document.getElementById('editUsername').value = saved.name || '';
+    document.getElementById('editBio').value = saved.bio || '';
+    // 触发一次预览
+    editAvatarInput.dispatchEvent(new Event('input'));
+    switchView('editProfile');
+});
+
+document.getElementById('saveProfileBtn').addEventListener('click', function() {
+    const avatar = document.getElementById('editAvatar').value.trim();
+    const name = document.getElementById('editUsername').value.trim();
+    const bio = document.getElementById('editBio').value.trim();
+    if (!name) {
+        alert('用户名不能为空');
+        return;
+    }
+    saveProfile(name, avatar, bio);
+    showSettingsToast('个人资料已保存');
+    switchView('profile');
+});
+
+document.getElementById('cancelEditProfileBtn').addEventListener('click', function() {
+    switchView('profile');
+});
+document.getElementById('backFromEditProfile').addEventListener('click', function() {
+    switchView('profile');
+});
+
+// 初始化
+loadProfile();
             switchView('home');
             // 点击页面空白处关闭下拉菜单
 document.addEventListener('click', function(e) {
