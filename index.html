@@ -55,20 +55,18 @@
         .nav-update { font-size:0.7rem; color:var(--text-secondary); }
         .nav-actions { display:flex; align-items:center; gap:8px; }
         .theme-toggle-btn {
-    width:38px; height:38px; border-radius:10px; border:none;
-    background: rgba(0,0,0,0.05);          /* 日间模式：极浅的灰色背景 */
-    cursor:pointer; font-size:1.2rem;
-    color:var(--text);
-    transition: background 0.2s;
-    display: flex; align-items: center; justify-content: center;
-}
-.dark-mode .theme-toggle-btn {
-    background: rgba(255,255,255,0.1);    /* 夜间模式：极浅的白色背景 */
-}
+            width:38px; height:38px; border-radius:10px; border:none;
+            background: rgba(0,0,0,0.05);
+            cursor:pointer; font-size:1.2rem;
+            color:var(--text);
+            transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dark-mode .theme-toggle-btn { background: rgba(255,255,255,0.1); }
         .theme-icon-dark { display: none; }
-.theme-icon-light { display: inline; }          /* 显式设置日间图标可见 */
-.dark-mode .theme-icon-light { display: none; }
-.dark-mode .theme-icon-dark { display: inline; }
+        .theme-icon-light { display: inline; }
+        .dark-mode .theme-icon-light { display: none; }
+        .dark-mode .theme-icon-dark { display: inline; }
         .nav-menu { position:static; }
         .nav-menu-btn {
             list-style:none; width:38px; height:38px; border-radius:10px; display:flex;
@@ -98,13 +96,13 @@
         }
 
         #viewContainer {
-    padding-top: var(--top-nav-height);
-    padding-bottom: calc(var(--bottom-nav-height) + 24px);
-    padding-left: 28px;
-    padding-right: 28px;
-    min-height: 100vh;
-    display: none;
-}
+            padding-top: var(--top-nav-height);
+            padding-bottom: calc(var(--bottom-nav-height) + 24px);
+            padding-left: 28px;
+            padding-right: 28px;
+            min-height: 100vh;
+            display: none;
+        }
         #viewContainer.active { display: block; }
         #viewHome.active { display: block; }
         #viewHome:not(.active) { display: none; }
@@ -129,8 +127,13 @@
             cursor:pointer; transition:color 0.2s, background 0.2s;
             border:none; background:transparent; position:relative; z-index:1;
         }
-        .bottom-nav-item .icon { font-size:1.4rem; line-height:1; transition:transform 0.2s; }
-        .bottom-nav-item.active { color:var(--text); }
+        .bottom-nav-item .icon { display:flex; align-items:center; justify-content:center; }
+        .bottom-nav-item .icon svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:fill 0.2s, stroke 0.2s; color:inherit; }
+        .bottom-nav-item .icon-filled { display:none; }
+        .bottom-nav-item.active .icon-outline { display:none; }
+        .bottom-nav-item.active .icon-filled { display:inline; }
+        .bottom-nav-item.active .icon-filled svg { fill:currentColor; stroke:none; }
+        .bottom-nav-item .icon-outline svg { fill:none; stroke:currentColor; }
 
         .slide-indicator {
             display: none;
@@ -180,7 +183,7 @@
             background:var(--surface); border:1px solid var(--border); border-radius:20px;
             padding:20px; margin-bottom:24px;
         }
-        .profile-avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:2rem; color:white; }
+        .profile-avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:2rem; color:white; overflow:hidden; }
         .profile-info { flex:1; }
         .profile-name { font-size:1.2rem; font-weight:700; margin-bottom:2px; }
         .profile-bio { font-size:0.85rem; color:var(--text-secondary); }
@@ -301,70 +304,32 @@
             .config-card { padding:16px; }
             .card-actions button { font-size:0.75rem; padding:8px 0; min-width:50px; }
         }
-        /* 底部导航栏 SVG 图标 */
-.bottom-nav-item .icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.bottom-nav-item .icon svg {
-    width: 24px;
-    height: 24px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    transition: fill 0.2s, stroke 0.2s;
-}
-/* 填充版 SVG：默认隐藏，选中时显示并改为实心填充 */
-.bottom-nav-item .icon-filled {
-    display: none;
-}
-.bottom-nav-item.active .icon-outline {
-    display: none;
-}
-.bottom-nav-item.active .icon-filled {
-    display: inline;
-}
-.bottom-nav-item.active .icon-filled svg {
-    fill: currentColor;
-    stroke: none;
-}
-.bottom-nav-item .icon-outline svg {
-    fill: none;
-    stroke: currentColor;
-}
-/* 深色模式下颜色自动跟随文字颜色 */
-.bottom-nav-item .icon svg {
-    color: inherit;
-}
     </style>
 </head>
 <body>
     <nav class="top-nav" id="topNav">
-    <div class="nav-inner">
-        <div class="nav-brand">
-            <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" class="nav-logo" alt="">
-            <div class="nav-title">
-                <span class="nav-title-text">legado-svg</span>
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <img src="https://legado-svg.heartthrob.cn/images/legado-svg.svg" class="nav-logo" alt="">
+                <div class="nav-title">
+                    <span class="nav-title-text">legado-svg</span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="切换深色模式">
+                    <span class="theme-icon-light">☀️</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </button>
+                <details class="nav-menu">
+                    <summary class="nav-menu-btn" aria-label="菜单">☰</summary>
+                    <div class="nav-dropdown">
+                        <button id="helpBtn">📖 使用说明</button>
+                        <button id="changelogBtn">📋 更新日志</button>
+                    </div>
+                </details>
             </div>
         </div>
-        <div class="nav-actions">
-            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="切换深色模式">
-                <span class="theme-icon-light">☀️</span>
-                <span class="theme-icon-dark">🌙</span>
-            </button>
-            <details class="nav-menu">
-                <summary class="nav-menu-btn" aria-label="菜单">☰</summary>
-                <div class="nav-dropdown">
-                    <button id="helpBtn">📖 使用说明</button>
-                    <button id="changelogBtn">📋 更新日志</button>
-                </div>
-            </details>
-        </div>
-    </div>
-</nav>
+    </nav>
 
     <!-- 使用说明弹窗（完整内容） -->
     <div class="help-modal-overlay" id="helpModalOverlay">
@@ -711,15 +676,15 @@
     <div id="viewContainer" class="view">
         <div class="view active" id="viewProfile">
             <div class="profile-card" id="profileInfoCard" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-    <div style="display:flex; align-items:center; gap:16px;">
-        <div class="profile-avatar" id="profileAvatarDisplay">😊</div>
-        <div class="profile-info">
-            <div class="profile-name" id="profileNameDisplay">legado 用户</div>
-            <div class="profile-bio" id="profileBioDisplay">自定义你的阅读气泡与导航栏</div>
-        </div>
-    </div>
-    <span style="color:var(--text-secondary); font-size:1.5rem;">›</span>
-</div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div class="profile-avatar" id="profileAvatarDisplay">😊</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profileNameDisplay">legado 用户</div>
+                        <div class="profile-bio" id="profileBioDisplay">自定义你的阅读气泡与导航栏</div>
+                    </div>
+                </div>
+                <span style="color:var(--text-secondary); font-size:1.5rem;">›</span>
+            </div>
             <div class="settings-list">
                 <div class="settings-item" id="openAppearanceBtn">
                     <div class="item-left"><span class="item-icon">🎨</span><span>外观设置</span></div>
@@ -766,76 +731,87 @@
             <button class="add-config-btn" id="bottomAddConfigBtn">＋ 添加配置</button>
         </div>
         <!-- 编辑个人资料 -->
-<div class="view" id="viewEditProfile">
-    <div class="appearance-header">
-        <button class="back-btn" id="backFromEditProfile">←</button>
-        <h2>编辑个人资料</h2>
+        <div class="view" id="viewEditProfile">
+            <div class="appearance-header">
+                <button class="back-btn" id="backFromEditProfile">←</button>
+                <h2>编辑个人资料</h2>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;max-width:500px;margin:0 auto;">
+                <div id="editAvatarPreview" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:3rem;color:white;overflow:hidden;flex-shrink:0;">
+                    😊
+                </div>
+                <div style="width:100%;">
+                    <label style="display:block;margin-bottom:6px;font-weight:600;">头像</label>
+                    <input type="text" id="editAvatar" placeholder="输入 Emoji 或图片链接" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+                </div>
+                <div style="width:100%;">
+                    <label style="display:block;margin-bottom:6px;font-weight:600;">用户名</label>
+                    <input type="text" id="editUsername" placeholder="你的名字" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+                </div>
+                <div style="width:100%;">
+                    <label style="display:block;margin-bottom:6px;font-weight:600;">简介</label>
+                    <textarea id="editBio" rows="3" placeholder="写一句简单的介绍..." style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical;"></textarea>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:8px;width:100%;">
+                    <button id="saveProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--primary);color:white;border:none;">保存</button>
+                    <button id="cancelEditProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--bg);color:var(--text);border:1px solid var(--border);">取消</button>
+                </div>
+
+                <!-- 裁剪模态（默认隐藏） -->
+<!-- 裁剪模态（固定直径圆圈） -->
+<!-- 裁剪模态（精确映射版） -->
+<div id="cropModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+    <div style="position:absolute; top:20px; right:20px; z-index:10;">
+        <button id="cropConfirmBtn" style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:white; border:none; font-size:24px; cursor:pointer;">✓</button>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;max-width:500px;margin:0 auto;">
-        <!-- 大头像预览 -->
-        <div id="editAvatarPreview" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:3rem;color:white;overflow:hidden;flex-shrink:0;">
-            😊
-        </div>
-        <div style="width:100%;">
-            <label style="display:block;margin-bottom:6px;font-weight:600;">头像</label>
-            <input type="text" id="editAvatar" placeholder="输入 Emoji 或图片链接" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
-        </div>
-        <div style="width:100%;">
-            <label style="display:block;margin-bottom:6px;font-weight:600;">用户名</label>
-            <input type="text" id="editUsername" placeholder="你的名字" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
-        </div>
-        <div style="width:100%;">
-            <label style="display:block;margin-bottom:6px;font-weight:600;">简介</label>
-            <textarea id="editBio" rows="3" placeholder="写一句简单的介绍..." style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical;"></textarea>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:8px;width:100%;">
-            <button id="saveProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--primary);color:white;border:none;">保存</button>
-            <button id="cancelEditProfileBtn" style="flex:1;padding:14px;border-radius:14px;font-weight:600;background:var(--bg);color:var(--text);border:1px solid var(--border);">取消</button>
-        </div>
+    <div id="cropImageContainer" style="position:relative; width:280px; height:280px; border-radius:50%; overflow:hidden; touch-action:none; user-select:none; background:#333;">
+        <img id="cropOriginalImg" src="" style="position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover;">
     </div>
+    <div style="color:white; margin-top:12px; font-size:0.9rem;">拖动图片调整裁剪位置</div>
 </div>
+            </div>
+        </div>
     </div>
 
     <!-- 底部导航栏 -->
     <div class="bottom-nav" id="bottomNav">
-    <div class="slide-indicator" id="slideIndicator"></div>
-    <button class="bottom-nav-item active" data-view="home">
-        <span class="icon">
-            <span class="icon-outline">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 12l9-9 9 9"/>
-                    <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
-                </svg>
+        <div class="slide-indicator" id="slideIndicator"></div>
+        <button class="bottom-nav-item active" data-view="home">
+            <span class="icon">
+                <span class="icon-outline">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 12l9-9 9 9"/>
+                        <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
+                    </svg>
+                </span>
+                <span class="icon-filled">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 12l9-9 9 9"/>
+                        <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
+                    </svg>
+                </span>
             </span>
-            <span class="icon-filled">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 12l9-9 9 9"/>
-                    <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
-                </svg>
+            <span>主页</span>
+        </button>
+        <button class="bottom-nav-item" data-view="profile">
+            <span class="icon">
+                <span class="icon-outline">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                    </svg>
+                </span>
+                <span class="icon-filled">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                    </svg>
+                </span>
             </span>
-        </span>
-        <span>主页</span>
-    </button>
-    <button class="bottom-nav-item" data-view="profile">
-        <span class="icon">
-            <span class="icon-outline">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
-                </svg>
-            </span>
-            <span class="icon-filled">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
-                </svg>
-            </span>
-        </span>
-        <span>我的</span>
-    </button>
-</div>
-
-    <!-- 设置页弹窗 -->
+            <span>我的</span>
+        </button>
+    </div>
+        <!-- 设置页弹窗 -->
     <div class="modal-overlay" id="addConfigModal">
         <div class="modal-sheet">
             <div class="modal-header"><h3>添加配置</h3><button class="modal-close-btn" id="closeAddModalBtn">&times;</button></div>
@@ -867,7 +843,8 @@
         </div>
     </div>
     <div id="toast" class="toast"></div>
-       <script src="script.js"></script>
+
+    <script src="script.js"></script>
     <script>
         (function() {
             // 设置页逻辑（完整移植，showToast 已改为 showSettingsToast）
@@ -1062,49 +1039,43 @@
             }
 
             function switchView(name) {
-    var homeEl = document.getElementById('viewHome');
-    var containerEl = document.getElementById('viewContainer');
-    // 先全部隐藏
-    homeEl.classList.remove('active');
-    containerEl.classList.remove('active');
-    // 根据 name 显示对应容器
-    if (name === 'home') {
-        homeEl.classList.add('active');
-    } else {
-        containerEl.classList.add('active');
-        // 显示子视图
-        var subViews = containerEl.querySelectorAll('.view');
-        subViews.forEach(v => v.classList.remove('active'));
-        var targetSub;
-        if (name === 'profile') {
-            targetSub = containerEl.querySelector('#viewProfile');
-        } else if (name === 'appearance') {
-            targetSub = containerEl.querySelector('#viewAppearance');
-        } else if (name === 'topBar') {
-            targetSub = containerEl.querySelector('#viewTopBarSettings');
-        } else if (name === 'bottomBar') {
-            targetSub = containerEl.querySelector('#viewBottomBarSettings');
-            } else if (name === 'editProfile') {
-    targetSub = containerEl.querySelector('#viewEditProfile');
-        } else {
-            // 后备
-            targetSub = containerEl.querySelector('#viewProfile');
-        }
-        if (targetSub) targetSub.classList.add('active');
-    }
-    // 底部导航高亮：始终更新以匹配当前 name（home 或 profile）
-    var items = bottomNav.querySelectorAll('.bottom-nav-item');
-    items.forEach(function(item) { item.classList.remove('active'); });
-    var activeItem = bottomNav.querySelector('.bottom-nav-item[data-view="' + name + '"]');
-    if (activeItem) {
-        activeItem.classList.add('active');
-    } else if (name !== 'home' && name !== 'profile') {
-        // 子页面时，保持“我的”按钮高亮
-        var profileBtn = bottomNav.querySelector('.bottom-nav-item[data-view="profile"]');
-        if (profileBtn) profileBtn.classList.add('active');
-    }
-    if (sliderEnabled) updateSliderPosition();
-}
+                var homeEl = document.getElementById('viewHome');
+                var containerEl = document.getElementById('viewContainer');
+                homeEl.classList.remove('active');
+                containerEl.classList.remove('active');
+                if (name === 'home') {
+                    homeEl.classList.add('active');
+                } else {
+                    containerEl.classList.add('active');
+                    var subViews = containerEl.querySelectorAll('.view');
+                    subViews.forEach(v => v.classList.remove('active'));
+                    var targetSub;
+                    if (name === 'profile') {
+                        targetSub = containerEl.querySelector('#viewProfile');
+                    } else if (name === 'appearance') {
+                        targetSub = containerEl.querySelector('#viewAppearance');
+                    } else if (name === 'topBar') {
+                        targetSub = containerEl.querySelector('#viewTopBarSettings');
+                    } else if (name === 'bottomBar') {
+                        targetSub = containerEl.querySelector('#viewBottomBarSettings');
+                    } else if (name === 'editProfile') {
+                        targetSub = containerEl.querySelector('#viewEditProfile');
+                    } else {
+                        targetSub = containerEl.querySelector('#viewProfile');
+                    }
+                    if (targetSub) targetSub.classList.add('active');
+                }
+                var items = bottomNav.querySelectorAll('.bottom-nav-item');
+                items.forEach(function(item) { item.classList.remove('active'); });
+                var activeItem = bottomNav.querySelector('.bottom-nav-item[data-view="' + name + '"]');
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                } else if (name !== 'home' && name !== 'profile') {
+                    var profileBtn = bottomNav.querySelector('.bottom-nav-item[data-view="profile"]');
+                    if (profileBtn) profileBtn.classList.add('active');
+                }
+                if (sliderEnabled) updateSliderPosition();
+            }
 
             bottomNav.addEventListener('click', function(e) {
                 var item = e.target.closest('.bottom-nav-item');
@@ -1123,19 +1094,16 @@
             document.getElementById('backFromBottomBar').addEventListener('click', function() { switchView('appearance'); });
 
             var toastEl = document.getElementById('toast');
-var toastTimer = null;
-function showSettingsToast(msg) {
-    if (!msg || typeof msg !== 'string') msg = '操作完成';
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    // 确保文字颜色可见（日间/夜间）
-    toastEl.style.color = 'var(--text)';
-    toastEl.style.background = 'var(--surface)';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function() {
-        toastEl.classList.remove('show');
-    }, 2000);
-}
+            var toastTimer = null;
+            function showSettingsToast(msg) {
+                if (!msg || typeof msg !== 'string') msg = '操作完成';
+                toastEl.textContent = msg;
+                toastEl.classList.add('show');
+                toastEl.style.color = 'var(--text)';
+                toastEl.style.background = 'var(--surface)';
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
+            }
 
             function renderActiveModeCard(barType) {
                 var containerId = barType === 'top' ? 'topActiveModeCard' : 'bottomActiveModeCard';
@@ -1497,35 +1465,20 @@ function showSettingsToast(msg) {
             helpModalOverlay.addEventListener('click', function(e) { if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('active'); });
             changelogModalOverlay.addEventListener('click', function(e) { if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active'); });
 
-            var topTab = document.querySelector('#topTabSwitch button[data-mode="'+(data.top.currentTab||'day')+'"]');
-            if (topTab) { document.querySelectorAll('#topTabSwitch button').forEach(b => b.classList.remove('active')); topTab.classList.add('active'); }
-            var bottomTab = document.querySelector('#bottomTabSwitch button[data-mode="'+(data.bottom.currentTab||'day')+'"]');
-            if (bottomTab) { document.querySelectorAll('#bottomTabSwitch button').forEach(b => b.classList.remove('active')); bottomTab.classList.add('active'); }
-
-            function applyInitialSettings() {
-                var topTheme = getCurrentThemeData('top');
-                var bottomTheme = getCurrentThemeData('bottom');
-                applyTopSettings(getConfigById('top', topTheme.activeConfigId || data.top.currentTab));
-                applyBottomSettings(getConfigById('bottom', bottomTheme.activeConfigId || data.bottom.currentTab));
-            }
-            setTimeout(applyInitialSettings, 50);
-            setTimeout(function() { if (sliderEnabled) updateSliderPosition(); }, 300);
-
-            renderActiveModeCard('top');
-            renderActiveModeCard('bottom');
-            window.addEventListener('resize', handleResize);
-            // ==================== 个人资料编辑功能 ====================
-// ==================== 个人资料编辑功能（增强版） ====================
+            // ==================== 个人资料编辑功能（裁剪模态版） ====================
+// ==================== 个人资料编辑功能（精确裁剪版） ====================
 const PROFILE_STORAGE_KEY = 'legado-user-profile';
+
 function updateProfileUI(saved) {
-    // 更新我的页面卡片
     const avatarEl = document.getElementById('profileAvatarDisplay');
     const nameEl = document.getElementById('profileNameDisplay');
     const bioEl = document.getElementById('profileBioDisplay');
     if (!avatarEl || !nameEl || !bioEl) return;
     if (saved.avatar) {
         if (saved.avatar.startsWith('http')) {
-            avatarEl.innerHTML = `<img src="${saved.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            const posX = saved.avatarPosX !== undefined ? saved.avatarPosX : 50;
+            const posY = saved.avatarPosY !== undefined ? saved.avatarPosY : 50;
+            avatarEl.innerHTML = `<img src="${saved.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:${posX}% ${posY}%;">`;
         } else {
             avatarEl.textContent = saved.avatar;
         }
@@ -1539,38 +1492,131 @@ function loadProfile() {
     const saved = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY)) || {};
     updateProfileUI(saved);
 }
-function saveProfile(name, avatar, bio) {
-    const data = { name, avatar, bio };
+function saveProfile(name, avatar, bio, avatarPosX, avatarPosY) {
+    const data = { name, avatar, bio, avatarPosX, avatarPosY };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data));
     updateProfileUI(data);
 }
 
-// 实时预览头像
 const editAvatarInput = document.getElementById('editAvatar');
 const editAvatarPreview = document.getElementById('editAvatarPreview');
-if (editAvatarInput && editAvatarPreview) {
-    editAvatarInput.addEventListener('input', function() {
-        const val = this.value.trim();
-        if (val === '') {
-            editAvatarPreview.textContent = '😊';
-            editAvatarPreview.innerHTML = '😊';
-        } else if (val.startsWith('http')) {
-            editAvatarPreview.innerHTML = `<img src="${val}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else {
-            editAvatarPreview.textContent = val;
-            editAvatarPreview.innerHTML = val; // 确保 Emoji 正常渲染
-        }
-    });
+const cropModal = document.getElementById('cropModal');
+const cropOriginalImg = document.getElementById('cropOriginalImg');
+const cropConfirmBtn = document.getElementById('cropConfirmBtn');
+const cropImageContainer = document.getElementById('cropImageContainer');
+
+function updateEditPreview() {
+    const val = editAvatarInput.value.trim();
+    const isImage = val.startsWith('http');
+    const posX = window._tempAvatarPosX !== undefined ? window._tempAvatarPosX : 50;
+    const posY = window._tempAvatarPosY !== undefined ? window._tempAvatarPosY : 50;
+    if (!val) {
+        editAvatarPreview.innerHTML = '😊';
+    } else if (isImage) {
+        editAvatarPreview.innerHTML = `<img src="${val}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:${posX}% ${posY}%;">`;
+    } else {
+        editAvatarPreview.innerHTML = val;
+    }
+}
+editAvatarInput.addEventListener('input', updateEditPreview);
+
+// 打开裁剪模态
+editAvatarPreview.addEventListener('click', function() {
+    const val = editAvatarInput.value.trim();
+    if (!val.startsWith('http')) return;
+    cropOriginalImg.src = val;
+    cropModal.style.display = 'flex';
+
+    const posX = window._tempAvatarPosX !== undefined ? window._tempAvatarPosX : 50;
+    const posY = window._tempAvatarPosY !== undefined ? window._tempAvatarPosY : 50;
+    cropOriginalImg.style.objectPosition = `${posX}% ${posY}%`;
+});
+
+function closeCropModal() {
+    cropModal.style.display = 'none';
 }
 
-// 打开编辑页面
+cropConfirmBtn.addEventListener('click', function() {
+    const posStr = cropOriginalImg.style.objectPosition;
+    const parts = posStr.split(' ');
+    let posX = 50, posY = 50;
+    if (parts.length === 2) {
+        posX = parseFloat(parts[0]) || 50;
+        posY = parseFloat(parts[1]) || 50;
+    }
+    window._tempAvatarPosX = posX;
+    window._tempAvatarPosY = posY;
+    updateEditPreview();
+    closeCropModal();
+});
+
+// 拖拽图片（修正灵敏度）
+let isDraggingCrop = false, startClientX, startClientY, startPosX, startPosY;
+function onCropDragStart(e) {
+    e.preventDefault();
+    isDraggingCrop = true;
+    const touch = e.touches ? e.touches[0] : e;
+    startClientX = touch.clientX;
+    startClientY = touch.clientY;
+    const posStr = cropOriginalImg.style.objectPosition || '50% 50%';
+    const parts = posStr.split(' ');
+    startPosX = parseFloat(parts[0]) || 50;
+    startPosY = parseFloat(parts[1]) || 50;
+    cropImageContainer.style.cursor = 'grabbing';
+}
+function onCropDragMove(e) {
+    if (!isDraggingCrop) return;
+    e.preventDefault();
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - startClientX;
+    const dy = touch.clientY - startClientY;
+    // 获取图片在容器内的实际渲染尺寸
+    const imgRect = cropOriginalImg.getBoundingClientRect();
+    const containerRect = cropImageContainer.getBoundingClientRect();
+    const imgDisplayW = imgRect.width;
+    const imgDisplayH = imgRect.height;
+    const containerW = containerRect.width;
+    const containerH = containerRect.height;
+    if (imgDisplayW === 0 || imgDisplayH === 0) return;
+
+    // 将像素移动转换为 object-position 的百分比变化
+    // object-position 百分比表示图片的某一点与容器中心对齐
+    // 移动 dx 像素相当于图片的 object-position 变化 (dx / imgDisplayW) * 100
+    const deltaPosX = (dx / imgDisplayW) * 100;
+    const deltaPosY = (dy / imgDisplayH) * 100;
+    // 注意：拖动方向与 object-position 变化方向相反（拖动图片向右 → 图片实际左移 → object-position 应减小）
+    let newPosX = startPosX - deltaPosX;
+    let newPosY = startPosY - deltaPosY;
+
+    // 限制范围，避免图片边缘露出（cover 模式下图片不会小于容器，因此范围可完全 0~100）
+    newPosX = Math.max(0, Math.min(100, newPosX));
+    newPosY = Math.max(0, Math.min(100, newPosY));
+
+    cropOriginalImg.style.objectPosition = `${newPosX}% ${newPosY}%`;
+}
+function onCropDragEnd() {
+    isDraggingCrop = false;
+    cropImageContainer.style.cursor = 'grab';
+}
+cropImageContainer.addEventListener('mousedown', onCropDragStart);
+cropImageContainer.addEventListener('touchstart', onCropDragStart, { passive: false });
+document.addEventListener('mousemove', onCropDragMove);
+document.addEventListener('touchmove', onCropDragMove, { passive: false });
+document.addEventListener('mouseup', onCropDragEnd);
+document.addEventListener('touchend', onCropDragEnd);
+
+cropModal.addEventListener('click', function(e) {
+    if (e.target === cropModal) closeCropModal();
+});
+
 document.getElementById('profileInfoCard').addEventListener('click', function() {
     const saved = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY)) || {};
     document.getElementById('editAvatar').value = saved.avatar || '';
     document.getElementById('editUsername').value = saved.name || '';
     document.getElementById('editBio').value = saved.bio || '';
-    // 触发一次预览
-    editAvatarInput.dispatchEvent(new Event('input'));
+    window._tempAvatarPosX = saved.avatarPosX !== undefined ? saved.avatarPosX : 50;
+    window._tempAvatarPosY = saved.avatarPosY !== undefined ? saved.avatarPosY : 50;
+    updateEditPreview();
     switchView('editProfile');
 });
 
@@ -1582,7 +1628,9 @@ document.getElementById('saveProfileBtn').addEventListener('click', function() {
         alert('用户名不能为空');
         return;
     }
-    saveProfile(name, avatar, bio);
+    const posX = window._tempAvatarPosX !== undefined ? window._tempAvatarPosX : 50;
+    const posY = window._tempAvatarPosY !== undefined ? window._tempAvatarPosY : 50;
+    saveProfile(name, avatar, bio, posX, posY);
     showSettingsToast('个人资料已保存');
     switchView('profile');
 });
@@ -1594,17 +1642,35 @@ document.getElementById('backFromEditProfile').addEventListener('click', functio
     switchView('profile');
 });
 
-// 初始化
 loadProfile();
-            switchView('home');
+
+// ---------- 原有初始化设置继续 ----------
+var topTab = document.querySelector('#topTabSwitch button[data-mode="'+(data.top.currentTab||'day')+'"]');
+if (topTab) { document.querySelectorAll('#topTabSwitch button').forEach(b => b.classList.remove('active')); topTab.classList.add('active'); }
+var bottomTab = document.querySelector('#bottomTabSwitch button[data-mode="'+(data.bottom.currentTab||'day')+'"]');
+if (bottomTab) { document.querySelectorAll('#bottomTabSwitch button').forEach(b => b.classList.remove('active')); bottomTab.classList.add('active'); }
+
+function applyInitialSettings() {
+    var topTheme = getCurrentThemeData('top');
+    var bottomTheme = getCurrentThemeData('bottom');
+    applyTopSettings(getConfigById('top', topTheme.activeConfigId || data.top.currentTab));
+    applyBottomSettings(getConfigById('bottom', bottomTheme.activeConfigId || data.bottom.currentTab));
+}
+setTimeout(applyInitialSettings, 50);
+setTimeout(function() { if (sliderEnabled) updateSliderPosition(); }, 300);
+
+renderActiveModeCard('top');
+renderActiveModeCard('bottom');
+window.addEventListener('resize', handleResize);
+switchView('home');
             // 点击页面空白处关闭下拉菜单
-document.addEventListener('click', function(e) {
-    var menu = document.querySelector('.nav-menu');
-    if (menu && menu.hasAttribute('open') && !menu.contains(e.target)) {
-        menu.removeAttribute('open');
-    }
-});
+            document.addEventListener('click', function(e) {
+                var menu = document.querySelector('.nav-menu');
+                if (menu && menu.hasAttribute('open') && !menu.contains(e.target)) {
+                    menu.removeAttribute('open');
+                }
+            });
         })();
     </script>
 </body>
-</html> 
+</html>
