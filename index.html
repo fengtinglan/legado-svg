@@ -988,11 +988,17 @@
         }
         if (targetSub) targetSub.classList.add('active');
     }
-    // 底部导航高亮
+    // 底部导航高亮：始终更新以匹配当前 name（home 或 profile）
     var items = bottomNav.querySelectorAll('.bottom-nav-item');
     items.forEach(function(item) { item.classList.remove('active'); });
     var activeItem = bottomNav.querySelector('.bottom-nav-item[data-view="' + name + '"]');
-    if (activeItem) activeItem.classList.add('active');
+    if (activeItem) {
+        activeItem.classList.add('active');
+    } else if (name !== 'home' && name !== 'profile') {
+        // 子页面时，保持“我的”按钮高亮
+        var profileBtn = bottomNav.querySelector('.bottom-nav-item[data-view="profile"]');
+        if (profileBtn) profileBtn.classList.add('active');
+    }
     if (sliderEnabled) updateSliderPosition();
 }
 
@@ -1013,12 +1019,19 @@
             document.getElementById('backFromBottomBar').addEventListener('click', function() { switchView('appearance'); });
 
             var toastEl = document.getElementById('toast');
-            var toastTimer = null;
-            function showSettingsToast(msg) {
-                toastEl.textContent = msg; toastEl.classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
-            }
+var toastTimer = null;
+function showSettingsToast(msg) {
+    if (!msg || typeof msg !== 'string') msg = '操作完成';
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    // 确保文字颜色可见（日间/夜间）
+    toastEl.style.color = 'var(--text)';
+    toastEl.style.background = 'var(--surface)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() {
+        toastEl.classList.remove('show');
+    }, 2000);
+}
 
             function renderActiveModeCard(barType) {
                 var containerId = barType === 'top' ? 'topActiveModeCard' : 'bottomActiveModeCard';
