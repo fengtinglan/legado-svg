@@ -301,6 +301,44 @@
             .config-card { padding:16px; }
             .card-actions button { font-size:0.75rem; padding:8px 0; min-width:50px; }
         }
+        /* 底部导航栏 SVG 图标 */
+.bottom-nav-item .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bottom-nav-item .icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: fill 0.2s, stroke 0.2s;
+}
+/* 填充版 SVG：默认隐藏，选中时显示并改为实心填充 */
+.bottom-nav-item .icon-filled {
+    display: none;
+}
+.bottom-nav-item.active .icon-outline {
+    display: none;
+}
+.bottom-nav-item.active .icon-filled {
+    display: inline;
+}
+.bottom-nav-item.active .icon-filled svg {
+    fill: currentColor;
+    stroke: none;
+}
+.bottom-nav-item .icon-outline svg {
+    fill: none;
+    stroke: currentColor;
+}
+/* 深色模式下颜色自动跟随文字颜色 */
+.bottom-nav-item .icon svg {
+    color: inherit;
+}
     </style>
 </head>
 <body>
@@ -728,10 +766,42 @@
 
     <!-- 底部导航栏 -->
     <div class="bottom-nav" id="bottomNav">
-        <div class="slide-indicator" id="slideIndicator"></div>
-        <button class="bottom-nav-item active" data-view="home"><span class="icon">🏠</span><span>主页</span></button>
-        <button class="bottom-nav-item" data-view="profile"><span class="icon">👤</span><span>我的</span></button>
-    </div>
+    <div class="slide-indicator" id="slideIndicator"></div>
+    <button class="bottom-nav-item active" data-view="home">
+        <span class="icon">
+            <span class="icon-outline">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12l9-9 9 9"/>
+                    <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
+                </svg>
+            </span>
+            <span class="icon-filled">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12l9-9 9 9"/>
+                    <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
+                </svg>
+            </span>
+        </span>
+        <span>主页</span>
+    </button>
+    <button class="bottom-nav-item" data-view="profile">
+        <span class="icon">
+            <span class="icon-outline">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                </svg>
+            </span>
+            <span class="icon-filled">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                </svg>
+            </span>
+        </span>
+        <span>我的</span>
+    </button>
+</div>
 
     <!-- 设置页弹窗 -->
     <div class="modal-overlay" id="addConfigModal">
