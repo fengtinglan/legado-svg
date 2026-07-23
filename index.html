@@ -82,7 +82,6 @@
         .view { display:none; }
         .view.active { display:block; }
 
-        /* 主页 iframe 容器 */
         #viewHome {
             width: 100vw;
             height: calc(100vh - 80px - var(--bottom-nav-height) - 24px);
@@ -118,6 +117,7 @@
         .bottom-nav-item.active { color:var(--text); }
 
         .slide-indicator {
+            display: none;
             position:absolute; top:4px; bottom:4px; left:0; width:50%;
             background:rgba(255,255,255,0.3); backdrop-filter:blur(16px);
             -webkit-backdrop-filter:blur(16px); border-radius:16px;
@@ -137,6 +137,7 @@
         .dark-mode .bottom-nav.mode-slide { background:rgba(15,23,42,0.45); }
 
         .bottom-nav.mode-slide .slide-indicator {
+            display: block;
             background:rgba(255,255,255,0.25); backdrop-filter:blur(22px);
             -webkit-backdrop-filter:blur(22px);
             border:1px solid rgba(255,255,255,0.5);
@@ -241,7 +242,6 @@
         .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 24px; box-shadow:0 8px 30px rgba(0,0,0,0.15); font-size:0.9rem; font-weight:500; z-index:1300; opacity:0; transition:opacity 0.25s; pointer-events:none; max-width:90%; }
         .toast.show { opacity:1; }
 
-        /* 帮助弹窗与更新日志弹窗 */
         .help-modal-overlay {
             position: fixed; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.55); z-index: 1201; display: none;
@@ -615,7 +615,6 @@
             themeBtn.addEventListener('click', function() {
                 var isDark = document.body.classList.toggle('dark-mode');
                 localStorage.setItem(DARK_KEY, isDark);
-                // 同步 iframe 深色模式
                 var iframe = document.getElementById('homeIframe');
                 if (iframe && iframe.contentWindow) {
                     iframe.contentWindow.postMessage({ type: 'darkMode', isDark: isDark }, '*');
@@ -687,12 +686,37 @@
                 };
             };
 
+            // 数据清洗
+            function sanitizeSettings(barType, settings) {
+                if (!settings._layoutName || !bottomLayoutPresets.some(p => p.name === settings._layoutName)) {
+                    settings._layoutName = barType === 'bottom' ? '悬浮胶囊' : '默认';
+                }
+                if (!settings._textureName || !texturePresets.some(p => p.name === settings._textureName)) {
+                    settings._textureName = '磨砂';
+                }
+                if (barType === 'bottom' && !settings._slideAnimation) {
+                    settings._slideAnimation = '平滑';
+                }
+            }
+
+            function sanitizeAllData() {
+                ['day', 'night'].forEach(tab => {
+                    sanitizeSettings('top', data.top[tab].settings);
+                    sanitizeSettings('bottom', data.bottom[tab].settings);
+                    (data.top[tab].customConfigs || []).forEach(c => sanitizeSettings('top', c.settings));
+                    (data.bottom[tab].customConfigs || []).forEach(c => sanitizeSettings('bottom', c.settings));
+                });
+            }
+
             var data = JSON.parse(localStorage.getItem(STORAGE_KEY));
             if (!data || !data.top || !data.top.day || !data.top.day.customConfigs) {
                 data = defaultData();
             }
             if (!data.top.currentTab) data.top.currentTab = 'day';
             if (!data.bottom.currentTab) data.bottom.currentTab = 'day';
+
+            sanitizeAllData();
+            saveData();
 
             function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
             function getBarData(barType) { return barType === 'top' ? data.top : data.bottom; }
@@ -757,6 +781,7 @@
                 if (!activeItem) return;
                 var navRect = bottomNav.getBoundingClientRect();
                 var itemRect = activeItem.getBoundingClientRect();
+                if (navRect.width === 0 || itemRect.width === 0) return;
                 var offsetX = itemRect.left - navRect.left;
                 var width = itemRect.width;
                 var sliderWidth = width - 4;
@@ -780,15 +805,25 @@
                 sliderEnabled = enable;
                 if (enable) {
                     bottomNav.classList.add('mode-slide');
-                    sliderEl.style.display = 'block';
-                    updateSliderPosition();
+                    if (!window._sliderResizeObserver) {
+                        window._sliderResizeObserver = new ResizeObserver(() => {
+                            if (sliderEnabled) updateSliderPosition();
+                        });
+                        window._sliderResizeObserver.observe(bottomNav);
+                    }
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => updateSliderPosition());
+                    });
                     bottomNav.addEventListener('touchstart', onTouchStart, { passive: false });
                     bottomNav.addEventListener('touchmove', onTouchMove, { passive: false });
                     bottomNav.addEventListener('touchend', onTouchEnd);
                     bottomNav.addEventListener('mousedown', onMouseDown);
                 } else {
                     bottomNav.classList.remove('mode-slide');
-                    sliderEl.style.display = 'none';
+                    if (window._sliderResizeObserver) {
+                        window._sliderResizeObserver.disconnect();
+                        window._sliderResizeObserver = null;
+                    }
                     bottomNav.removeEventListener('touchstart', onTouchStart);
                     bottomNav.removeEventListener('touchmove', onTouchMove);
                     bottomNav.removeEventListener('touchend', onTouchEnd);
@@ -936,7 +971,7 @@
                 toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
             }
 
-            // ---------- 渲染配置卡片 ----------
+            // ---------- 渲染配置卡片（保持原逻辑） ----------
             function renderActiveModeCard(barType) {
                 var containerId = barType === 'top' ? 'topActiveModeCard' : 'bottomActiveModeCard';
                 var container = document.getElementById(containerId);
@@ -1072,7 +1107,6 @@
             document.getElementById('closeAddModalBtn').addEventListener('click', function() { addConfigModal.classList.remove('active'); pendingBarType = null; });
             addConfigModal.addEventListener('click', function(e) { if (e.target === addConfigModal) { addConfigModal.classList.remove('active'); pendingBarType = null; } });
             document.getElementById('manualConfigBtn').addEventListener('click', window.manualAddConfig);
-            // 绑定导入按钮
             document.getElementById('importConfigBtn').addEventListener('click', window.importConfig);
 
             document.getElementById('importFileInput').addEventListener('change', function(e) {
@@ -1165,7 +1199,7 @@
             document.getElementById('closeMoreModalBtn').addEventListener('click', function() { moreModal.classList.remove('active'); });
             moreModal.addEventListener('click', function(e) { if (e.target === moreModal) moreModal.classList.remove('active'); });
 
-            // ---------- 编辑弹窗 ----------
+            // ---------- 编辑弹窗（保持不变） ----------
             var currentEditBarType, editTempSettings, editCurrentId;
             var editModal = document.getElementById('editModal');
 
@@ -1363,29 +1397,47 @@
                 if (e.target === changelogModalOverlay) changelogModalOverlay.classList.remove('active');
             });
 
-            // ---------- 初始化 ----------
+            // ---------- 延迟初始化应用 ----------
             var topTab = document.querySelector('#topTabSwitch button[data-mode="'+(data.top.currentTab||'day')+'"]');
             if (topTab) { document.querySelectorAll('#topTabSwitch button').forEach(b => b.classList.remove('active')); topTab.classList.add('active'); }
             var bottomTab = document.querySelector('#bottomTabSwitch button[data-mode="'+(data.bottom.currentTab||'day')+'"]');
             if (bottomTab) { document.querySelectorAll('#bottomTabSwitch button').forEach(b => b.classList.remove('active')); bottomTab.classList.add('active'); }
 
-            var topTheme = getCurrentThemeData('top');
-            applyTopSettings(getConfigById('top', topTheme.activeConfigId || data.top.currentTab));
-            var bottomTheme = getCurrentThemeData('bottom');
-            applyBottomSettings(getConfigById('bottom', bottomTheme.activeConfigId || data.bottom.currentTab));
+            function applyInitialSettings() {
+                var topTheme = getCurrentThemeData('top');
+                var bottomTheme = getCurrentThemeData('bottom');
+                applyTopSettings(getConfigById('top', topTheme.activeConfigId || data.top.currentTab));
+                applyBottomSettings(getConfigById('bottom', bottomTheme.activeConfigId || data.bottom.currentTab));
+            }
+
+            var iframe = document.getElementById('homeIframe');
+            function onIframeReady() {
+                applyInitialSettings();
+                setTimeout(() => {
+                    if (sliderEnabled) updateSliderPosition();
+                }, 200);
+            }
+
+            if (iframe) {
+                if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                    onIframeReady();
+                } else {
+                    iframe.addEventListener('load', onIframeReady);
+                }
+            } else {
+                applyInitialSettings();
+            }
 
             renderActiveModeCard('top');
             renderActiveModeCard('bottom');
             window.addEventListener('resize', handleResize);
             switchView('home');
 
-            // 初始化时同步深色模式给 iframe
-            var iframe = document.getElementById('homeIframe');
             if (iframe && iframe.contentWindow) {
                 iframe.contentWindow.postMessage({ type: 'darkMode', isDark: document.body.classList.contains('dark-mode') }, '*');
             }
 
-            console.log('✅ 完整版 index.html 已加载，日夜间同步 & 导入按钮正常');
+            console.log('✅ 修复版 index.html 已加载，滑块初始位置正常');
         })();
     </script>
 </body>
